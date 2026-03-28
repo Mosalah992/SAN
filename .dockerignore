@@ -1,0 +1,46 @@
+# Git and IDE
+.git
+.gitignore
+.agent.pid
+.cursor
+.vscode
+*.swp
+*.swo
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv
+env
+
+# Build artifacts
+*.egg-info
+dist
+build
+
+# Large data (mount as volumes instead)
+data/
+checkpoints/
+*.pt
+*.bin
+*.pickle
+
+# Logs (persist via volume)
+logs/*.log
+logs/*.jsonl
+
+# Local config (mount .env at runtime)
+.env
+.env.local
+.env.*.local
+
+# Docs and misc
+*.md
+!README.md
+docs/
+tests/
+*.ps1

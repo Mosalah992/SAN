@@ -1,0 +1,29 @@
+/* ─── Minimal Reset ──────────────────────────────────────── */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-chrome);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button { cursor: pointer; border: none; background: none; color: inherit; font: inherit; }
+input, textarea {
+  background: var(--bg-elevated);
+  border: var(--border);
+  color: var(--text-primary);
+  font: inherit;
+  border-radius: var(--r-btn);
+  outline: none;
+}
+input:focus, textarea:focus { border-color: var(--cyan); }
+a { color: var(--cyan); text-decoration: none; }
+svg { display: block; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a2a40; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a60; }
+.hidden { display: none !important; }

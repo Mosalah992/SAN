@@ -1,0 +1,480 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Semantic design tokens */
+:root {
+  --primary: 142 70% 45%;
+  --glow-cyan: 185 70% 50%;
+  --glow-amber: 38 92% 50%;
+}
+
+/* Typography: Space Grotesk for UI, JetBrains Mono for data */
+body {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+}
+
+.font-mono, pre, code, .pane, input, select, .mchip {
+  font-family: "JetBrains Mono", "Courier New", monospace;
+}
+
+/* Glow utilities */
+.glow-green {
+  text-shadow: 0 0 12px hsl(142 70% 45% / 0.5);
+  box-shadow: 0 0 12px hsl(142 70% 45% / 0.35);
+}
+.glow-magenta {
+  text-shadow: 0 0 8px hsl(300 100% 50% / 0.5);
+}
+.panel-glow {
+  box-shadow: 0 0 8px hsl(142 70% 45% / 0.08), 0 0 2px hsl(185 70% 50% / 0.15), inset 0 0 1px hsl(142 70% 45% / 0.06);
+}
+.scanline {
+  position: relative;
+}
+.scanline::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0,
+    transparent 1px,
+    hsl(142 70% 45% / 0.02) 1px,
+    hsl(142 70% 45% / 0.02) 2px
+  );
+  animation: scanline-crt 6s linear infinite;
+}
+@keyframes scanline-crt {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* Cyberpunk overlays — not easily expressed as Tailwind utilities */
+@layer components {
+  body::before {
+    @apply fixed inset-0 pointer-events-none z-[9997];
+    background: radial-gradient(
+        ellipse 900px 500px at 15% 30%,
+        hsl(140 100% 50% / 0.05),
+        transparent
+      ),
+      radial-gradient(
+        ellipse 700px 400px at 85% 60%,
+        hsl(140 100% 50% / 0.04),
+        transparent
+      ),
+      radial-gradient(
+        ellipse 500px 500px at 50% 10%,
+        hsl(180 100% 50% / 0.03),
+        transparent
+      );
+  }
+  body::after {
+    @apply fixed inset-0 pointer-events-none z-[9998];
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.06) 2px,
+      rgba(0, 0, 0, 0.06) 4px
+    );
+    animation: scanline-move 8s linear infinite;
+  }
+  @keyframes scanline-move {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+  .scanline-overlay::before {
+    @apply absolute inset-0 pointer-events-none;
+    content: "";
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 1px,
+      hsl(142 70% 45% / 0.02) 1px,
+      hsl(142 70% 45% / 0.02) 2px
+    );
+  }
+}
+
+/* Main layout grid (required for tabs/panels) */
+@layer components {
+  main.layout {
+    @apply flex-1 min-h-0 p-1 overflow-hidden;
+    display: grid;
+    gap: 2px;
+    grid-template-columns: 3fr 1fr;
+    grid-template-rows: 2fr 2fr auto auto 1.5fr 1fr;
+  }
+}
+
+/* Behavior Lab layout */
+@layer components {
+  .lab-header {
+    @apply border-cyber-green/20;
+  }
+  .lab-logo {
+    box-shadow: 0 0 8px hsl(140 100% 50% / 0.25), 0 0 16px hsl(140 100% 50% / 0.1);
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 8px hsl(140 100% 50% / 0.25), 0 0 16px hsl(140 100% 50% / 0.1); }
+    50% { box-shadow: 0 0 12px hsl(140 100% 50% / 0.35), 0 0 20px hsl(140 100% 50% / 0.15); }
+  }
+  .lab-panel {
+    @apply rounded-sm;
+    box-shadow: 0 0 8px hsl(142 70% 45% / 0.08), 0 0 2px hsl(185 70% 50% / 0.15), inset 0 0 1px hsl(142 70% 45% / 0.06);
+  }
+  .lab-panel-title {
+    @apply font-bold;
+  }
+  .lab-metric-card {
+    @apply rounded-sm;
+    box-shadow: 0 0 8px hsl(140 100% 50% / 0.08), 0 0 1px hsl(140 100% 50% / 0.15);
+    transition: box-shadow 0.3s ease;
+  }
+  .lab-metric-card:hover {
+    box-shadow: 0 0 12px hsl(140 100% 50% / 0.12), 0 0 2px hsl(180 100% 50% / 0.2);
+  }
+  .lab-graph {
+    min-height: auto;
+  }
+  .karma-history-bars,
+  .defense-history-bars {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+  }
+  .karma-bar,
+  .defense-bar {
+    flex: 1;
+    min-width: 4px;
+  }
+  .event-tag {
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .event-tag-syst { color: hsl(142 70% 45%); }
+  .event-tag-sec { color: hsl(185 70% 50%); }
+  .event-tag-redt { color: hsl(340 100% 50%); }
+  .event-tag-phil { color: hsl(300 100% 50%); }
+  .event-tag-analyst { color: hsl(270 85% 65%); }
+  .event-tag-warn { color: hsl(38 92% 50%); }
+  .event-tag-aler { color: hsl(340 100% 60%); }
+  .lab-main {
+    grid-template-rows: 1fr;
+    min-height: 0;
+  }
+  .lab-bottom {
+    min-height: 90px;
+    max-height: 35vh;
+  }
+}
+
+/* Scrollbar (Tailwind has no built-in) */
+@layer components {
+  ::-webkit-scrollbar {
+    @apply w-[5px] h-[5px];
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-cyber-void;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-cyber-green-muted;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-cyber-green-dim;
+  }
+}
+
+/* Incident log lines (Security Incidents LOG view) */
+@layer components {
+  .incident-line {
+    @apply border-b border-cyber-green/5 last:border-b-0;
+  }
+  .incident-line:hover {
+    @apply bg-cyber-green/5;
+  }
+}
+
+/* Level colors for log lines (app.js injects .lvl-*) */
+@layer utilities {
+  .lvl-info {
+    @apply text-cyber-green;
+  }
+  .lvl-debug {
+    @apply text-cyber-cyan;
+  }
+  .lvl-warn {
+    @apply text-cyber-yellow;
+  }
+  .lvl-error {
+    @apply text-cyber-red;
+  }
+  .lvl-alert {
+    @apply text-cyber-magenta;
+  }
+  .dim {
+    @apply opacity-75;
+  }
+  .btn-dim {
+    @apply opacity-45;
+  }
+}
+
+/* Cyberpunk button variants */
+@layer components {
+  .btn-cyber {
+    @apply border border-cyber-green/20 bg-cyber-void text-cyber-green/65 py-1 px-2.5 font-mono text-[10px] tracking-wider cursor-pointer transition-all duration-150;
+  }
+  .btn-cyber:hover {
+    @apply text-cyber-green border-cyber-green-dim;
+    box-shadow: 0 0 10px hsl(142 70% 45% / 0.15);
+    text-shadow: 0 0 6px hsl(142 70% 45% / 0.4);
+  }
+  .btn-cyber:active {
+    @apply translate-y-px;
+  }
+  .btn-cyber:disabled {
+    @apply opacity-30 cursor-default;
+    box-shadow: none;
+  }
+  .btn-cyber-green {
+    @apply text-cyber-green;
+    border-color: hsl(142 70% 45% / 0.3);
+  }
+  .btn-cyber-green:hover {
+    box-shadow: 0 0 14px hsl(142 70% 45% / 0.2);
+  }
+  .btn-cyber-cyan {
+    @apply text-cyber-cyan;
+    border-color: hsl(185 70% 50% / 0.2);
+  }
+  .btn-cyber-cyan:hover {
+    box-shadow: 0 0 14px hsl(185 70% 50% / 0.2);
+  }
+  .btn-cyber-yellow {
+    @apply text-cyber-yellow;
+    border-color: hsl(70 100% 50% / 0.2);
+  }
+  .btn-cyber-yellow:hover {
+    box-shadow: 0 0 14px hsl(70 100% 50% / 0.4);
+  }
+  .btn-cyber-red {
+    @apply text-cyber-red;
+    border-color: hsl(340 100% 50% / 0.2);
+  }
+  .btn-cyber-red:hover {
+    box-shadow: 0 0 14px hsl(340 100% 50% / 0.2);
+  }
+  .btn-cyber-magenta {
+    @apply text-cyber-magenta;
+    border-color: hsl(300 100% 50% / 0.2);
+  }
+  .btn-cyber-magenta:hover {
+    box-shadow: 0 0 14px hsl(300 100% 50% / 0.2);
+  }
+}
+
+/* Model status indicator */
+.status-indicator.connected {
+  background: #4ade80;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+}
+.status-indicator.disconnected {
+  background: #f87171;
+}
+.status-indicator.disabled {
+  background: #fbbf24;
+}
+
+/* Tab active state (app.js toggles is-active) */
+@layer components {
+  .tab.is-active {
+    @apply text-cyber-green border-cyber-green/50 bg-cyber-green/[0.06];
+    text-shadow: 0 0 4px hsl(142 70% 45% / 0.4);
+  }
+  .lab-tab.is-active {
+    @apply bg-cyber-green text-cyber-black border-cyber-green;
+    text-shadow: none;
+  }
+}
+
+/* Status dot variants (app.js toggles these on feed-status-icon) */
+@layer components {
+  .status-live {
+    @apply bg-cyber-green rounded-full;
+    box-shadow: 0 0 8px hsl(142 70% 45% / 0.4), 0 0 16px hsl(142 70% 45% / 0.2);
+    animation: dot-blink 1.5s ease-in-out infinite;
+  }
+  .status-paused {
+    @apply bg-cyber-yellow rounded-full;
+    box-shadow: 0 0 8px hsl(70 100% 50% / 0.4);
+  }
+  .status-polling {
+    @apply bg-cyber-cyan rounded-full;
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+  }
+  .status-off {
+    @apply bg-cyber-green/20 rounded-full;
+  }
+  @keyframes dot-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+  }
+}
+
+/* Chat messages (app.js creates .chat-msg .user / .agent) */
+@layer components {
+  .chat-msg {
+    @apply p-1.5 px-2 rounded-sm max-w-full break-words whitespace-pre-wrap;
+  }
+  .chat-msg.user {
+    @apply bg-cyber-green/[0.08] border-l-2 border-cyber-green-dim self-end ml-[20%];
+  }
+  .chat-msg.agent {
+    @apply bg-cyber-cyan/[0.06] border-l-2 border-cyber-cyan self-start mr-[20%];
+  }
+  .chat-msg.agent .chat-label {
+    @apply text-cyber-cyan text-[9px];
+  }
+  .chat-msg.user .chat-label {
+    @apply text-cyber-green-dim text-[9px];
+  }
+  .chat-feedback-row {
+    @apply flex items-center gap-1 py-1 px-2 pb-1.5 text-[9px] text-cyber-green/35;
+  }
+  .chat-fb-sent {
+    @apply opacity-50 pointer-events-none;
+  }
+}
+
+/* LEARN/DEFENSE metric cards (app.js injects HTML) */
+@layer components {
+  .metric-cards-row {
+    @apply flex flex-wrap gap-2.5;
+  }
+  .metric-card {
+    @apply bg-cyber-green/[0.06] border border-cyber-green/20 rounded-sm p-2.5 px-3 text-[11px];
+  }
+  .metric-cards-row .metric-card {
+    @apply flex-1 min-w-[100px];
+  }
+  .metric-card .metric-label {
+    @apply text-cyber-green/35 text-[9px] tracking-wider uppercase;
+  }
+  .metric-card .metric-value {
+    @apply text-cyber-green font-semibold text-base;
+  }
+  .alert-box {
+    @apply p-2 px-3 rounded-sm text-[11px] border-l-4;
+  }
+  .alert-box.success {
+    @apply bg-cyber-green/[0.08] border-cyber-green;
+  }
+  .alert-box.warning {
+    @apply bg-cyber-yellow/[0.08] border-cyber-yellow;
+  }
+  .recent-item {
+    @apply py-1.5 border-b border-cyber-green/10 text-[10px] text-cyber-green/65 last:border-b-0;
+  }
+  .threat-level {
+    @apply inline-block py-1 px-2.5 rounded-sm font-bold uppercase text-[11px];
+  }
+  .threat-level.green {
+    @apply bg-cyber-green/20 text-cyber-green;
+  }
+  .threat-level.yellow {
+    @apply bg-cyber-yellow/20 text-cyber-yellow;
+  }
+  .threat-level.orange {
+    @apply bg-orange-500/20 text-orange-500;
+  }
+  .threat-level.red {
+    @apply bg-cyber-red/20 text-cyber-red;
+  }
+}
+
+/* Animations used by app.js */
+@layer utilities {
+  @keyframes pulse-ok {
+    0%,
+    100% {
+      box-shadow: 0 0 0 transparent;
+    }
+    40% {
+      box-shadow: 0 0 16px hsl(142 70% 45% / 0.3);
+    }
+  }
+  @keyframes pulse-err {
+    0%,
+    100% {
+      box-shadow: 0 0 0 transparent;
+    }
+    40% {
+      box-shadow: 0 0 16px rgba(255, 0, 64, 0.35);
+    }
+  }
+  .btn-pulse-ok {
+    animation: pulse-ok 0.3s ease-out;
+  }
+  .btn-pulse-err {
+    animation: pulse-err 0.3s ease-out;
+  }
+}
+
+/* Responsive layout */
+@layer utilities {
+  @media (max-width: 1100px) {
+    main.layout {
+      grid-template-columns: 1fr !important;
+      grid-template-rows: none !important;
+    }
+    .panel.feed,
+    .panel.activity {
+      grid-column: auto !important;
+      grid-row: auto !important;
+    }
+    .panel.feed {
+      min-height: 300px;
+    }
+    .panel.activity {
+      min-height: 150px;
+    }
+    .panel-inj,
+    .panel-epi,
+    .panel-alert,
+    .panel-sys,
+    .panel-chat,
+    .panel-learn,
+    .panel-defense {
+      grid-column: auto !important;
+      grid-row: auto !important;
+    }
+    .panel-chat {
+      min-height: 180px;
+    }
+  }
+}
+
+/* Threat levels (app.js sets class) */
+@layer utilities {
+  .threat-low {
+    @apply text-cyber-green !important;
+  }
+  .threat-med {
+    @apply text-cyber-yellow !important;
+    text-shadow: 0 0 6px hsl(70 100% 50% / 0.3);
+  }
+  .threat-high {
+    @apply text-cyber-red !important;
+    text-shadow: 0 0 6px rgba(255, 0, 64, 0.4);
+  }
+}

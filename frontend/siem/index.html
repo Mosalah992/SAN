@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sancta AI Behavior Laboratory</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="h-full overflow-hidden bg-cyber-black text-cyber-green font-sans text-xs scanline-overlay">
+    <div id="auth-overlay" class="fixed inset-0 z-[9999] bg-black/92 hidden flex items-center justify-center" style="display: none;">
+      <div class="p-6 border border-cyber-green/20 bg-cyber-void min-w-[280px]">
+        <div class="text-base font-bold mb-1">Sancta</div>
+        <div class="text-cyber-green/65 text-[11px] mb-3">Enter token to access</div>
+        <input id="auth-token" type="password" placeholder="Token" autocomplete="current-password" class="w-full py-2 px-2.5 mb-2.5 bg-cyber-black border border-cyber-green/20 text-cyber-green font-mono text-[13px]" />
+        <button id="auth-submit" class="btn-cyber btn-cyber-cyan w-full">Unlock</button>
+        <div id="auth-error" class="text-cyber-red text-[11px] mt-2 min-h-4"></div>
+      </div>
+    </div>
+    <div class="h-full flex flex-col scanline">
+      <!-- Header: Brand + Nav + Actions (SANCTA AI Behavior Laboratory) -->
+      <header class="lab-header flex items-center justify-between gap-4 px-4 py-2 border-b border-cyber-green/20 bg-cyber-void shrink-0 min-w-0 overflow-x-auto">
+        <div class="flex items-center gap-3 shrink-0">
+          <div class="lab-logo w-8 h-8 border-2 border-cyber-green flex items-center justify-center text-cyber-green font-bold text-sm">S</div>
+          <div>
+            <div class="text-lg font-bold tracking-widest text-cyber-green glow-green">SANCTA SECURITY OPERATIONS CENTER</div>
+            <div class="text-[9px] tracking-[0.3em] text-cyber-green/35">Dashboard | Governance | Memory | Interact | Lab | Epidemic</div>
+          </div>
+        </div>
+        <nav class="nav-main flex gap-1 flex-1 justify-center min-w-0 overflow-x-auto" role="tablist" aria-label="Main navigation">
+          <button class="nav-tab lab-tab px-3 py-1.5 text-[9px] tracking-widest border cursor-pointer transition-all is-active" data-nav="dashboard">Dashboard</button>
+          <button class="nav-tab lab-tab px-3 py-1.5 text-[9px] tracking-widest border cursor-pointer transition-all" data-nav="governance">Governance</button>
+          <button class="nav-tab lab-tab px-3 py-1.5 text-[9px] tracking-widest border cursor-pointer transition-all" data-nav="memory">Memory</button>
+          <button class="nav-tab lab-tab px-3 py-1.5 text-[9px] tracking-widest border cursor-pointer transition-all" data-nav="interact">Interact</button>
+          <button class="nav-tab lab-tab px-3 py-1.5 text-[9px] tracking-widest border cursor-pointer transition-all" data-nav="lab">Lab</button>
+          <button class="nav-tab lab-tab px-3 py-1.5 text-[9px] tracking-widest border cursor-pointer transition-all" data-nav="epidemic">Epidemic</button>
+        </nav>
+        <div class="flex gap-1.5 items-center flex-wrap justify-end shrink-0">
+          <div class="model-status flex items-center gap-1.5 px-2 py-0.5 border border-cyber-green/20 rounded" id="modelStatus">
+            <span class="status-indicator w-2 h-2 rounded-full bg-cyber-green/50" id="modelStatusIndicator"></span>
+            <span class="status-text text-[9px] text-cyber-green/65" id="modelStatusText">Checking LLM...</span>
+          </div>
+          <span id="mood-badge" class="text-cyber-magenta text-[9px] tracking-wider px-2 py-0.5 border border-cyber-green/20">&mdash;</span>
+          <select id="mode" class="bg-cyber-void border border-cyber-green/20 text-cyber-green py-1 px-2 font-mono text-[9px] outline-none">
+            <option value="passive" selected>PASSIVE</option>
+            <option value="active">RED TEAM</option>
+            <option value="blue">BLUE TEAM</option>
+            <option value="sim">SIMULATION</option>
+          </select>
+          <button id="start" class="btn-cyber btn-cyber-green text-[9px]">&#9654;</button>
+          <button id="pause" class="btn-cyber btn-cyber-yellow text-[9px]">&#9646;&#9646;</button>
+          <button id="resume" class="btn-cyber btn-cyber-cyan text-[9px]">&#9654;</button>
+          <button id="restart" class="btn-cyber btn-cyber-magenta text-[9px]">&#8635;</button>
+          <button id="kill" class="btn-cyber btn-cyber-red text-[9px]">&#9632;</button>
+          <button id="sound-toggle" type="button" class="btn-cyber btn-cyber-cyan text-[9px]">&#128266;</button>
+          <label class="flex gap-1 items-center text-[8px] text-cyber-green/35">
+            <input type="checkbox" id="scrollLock" checked class="accent-primary" />
+            <span>LOCK</span>
+          </label>
+          <a href="/simulator" target="_blank" rel="noopener" class="text-[9px] text-cyber-cyan hover:underline">Simulator</a>
+        </div>
+      </header>
+
+      <!-- Row 2: Metric cards (autonomous agent: score, cycles, mood) -->
+      <section class="lab-metrics grid grid-cols-2 gap-2.5 px-2.5 py-2 border-b border-cyber-green/20 bg-cyber-void shrink-0">
+        <div class="lab-metric-card flex flex-col items-center justify-center py-2 px-3 border border-cyber-green/20 bg-cyber-surface">
+          <span id="f-avg-score" class="text-2xl font-bold text-cyber-green mb-0.5 glow-green">0.70</span>
+          <span class="text-[9px] tracking-widest text-cyber-green/35 uppercase">AVG DECISION SCORE</span>
+        </div>
+        <div class="lab-metric-card flex flex-col items-center justify-center py-2 px-3 border border-cyber-green/20 bg-cyber-surface">
+          <span id="f-total-decisions" class="text-2xl font-bold text-cyber-green mb-0.5 glow-green">0</span>
+          <span class="text-[9px] tracking-widest text-cyber-green/35 uppercase">TOTAL CYCLES</span>
+          <span id="f-current-mood" class="text-cyber-magenta text-[9px] mt-1 glow-magenta font-semibold">—</span>
+        </div>
+      </section>
+
+      <!-- Row 2b: Feed controls (collapsed when not needed) -->
+      <section class="lab-graph flex items-center gap-4 px-3 py-1 border-b border-cyber-green/10 bg-cyber-void shrink-0 flex-wrap">
+        <span class="text-[9px] tracking-widest text-cyber-green/35">MOOD:</span>
+        <span id="m-mood" class="text-cyber-magenta font-bold text-xs">&mdash;</span>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <input type="datetime-local" id="time-from" class="bg-cyber-black border border-cyber-green/20 text-cyber-green py-0.5 px-1.5 text-[9px] font-mono" title="From" />
+          <input type="datetime-local" id="time-to" class="bg-cyber-black border border-cyber-green/20 text-cyber-green py-0.5 px-1.5 text-[9px] font-mono" title="To" />
+          <button type="button" id="time-apply" class="btn-cyber text-[8px] py-0.5">APPLY</button>
+          <button type="button" id="time-clear" class="btn-cyber text-[8px] py-0.5">CLEAR</button>
+          <button type="button" id="feed-toggle" class="btn-cyber btn-cyber-cyan text-[8px] py-0.5" title="Pause/Live feed">&#x23f8; PAUSE</button>
+        </div>
+      </section>
+
+      <!-- Row 3: Agent Control | Event Stream | Security & Red Team -->
+      <section class="lab-main grid gap-2 flex-1 min-h-0 p-2 overflow-hidden" style="grid-template-columns: 1fr minmax(280px, 2fr) 1fr;">
+        <!-- Agent Control -->
+        <div class="lab-panel flex flex-col overflow-hidden border border-cyber-green/20 bg-cyber-void col-[1] row-[1] min-w-0">
+          <div class="lab-panel-title flex items-center gap-2 px-2 py-1.5 border-b border-cyber-green/20">
+            <span class="w-2 h-2 rounded-full bg-cyber-green status-dot" id="feed-status-icon"></span>
+            <span class="text-[9px] tracking-widest text-cyber-cyan">AGENT CONTROL</span>
+            <span id="feed-status-label" class="text-[8px] text-cyber-green/50 ml-auto">—</span>
+          </div>
+          <div class="flex flex-wrap gap-2 p-2 border-b border-cyber-green/10">
+            <div class="flex flex-col"><span class="text-[7px] text-cyber-green/35">Agent</span><span id="m-agent" class="text-cyber-green font-bold text-sm">&mdash;</span></div>
+            <div class="flex flex-col"><span class="text-[7px] text-cyber-green/35">PID</span><span id="m-pid" class="text-cyber-green font-bold text-sm">&mdash;</span></div>
+            <div class="flex flex-col"><span class="text-[7px] text-cyber-green/35">Status</span><span id="m-status" class="text-cyber-green font-bold text-sm">&mdash;</span></div>
+            <div class="flex flex-col"><span class="text-[7px] text-cyber-green/35">Mood</span><span class="text-cyber-magenta font-bold text-sm mood-value">&mdash;</span></div>
+            <div class="flex flex-col"><span class="text-[7px] text-cyber-green/35">Cycle</span><span id="m-cycle" class="text-cyber-green font-bold text-sm">&mdash;</span></div>
+            <div class="flex flex-col"><span class="text-[7px] text-cyber-green/35">Karma</span><span id="m-karma" class="text-cyber-green font-bold text-sm">&mdash;</span></div>
+            <div class="flex flex-col"><span class="text-[7px] text-cyber-green/35">Heartbeat</span><span id="m-heartbeat" class="text-cyber-green font-bold text-sm">&mdash;</span></div>
+          </div>
+          <div class="px-2 py-1 border-b border-cyber-green/10">
+            <span class="text-[7px] text-cyber-green/35 uppercase">Karma History</span>
+            <div id="karma-history-bars" class="flex gap-0.5 mt-1 flex-wrap karma-history-bars"></div>
+          </div>
+          <div class="lab-panel-title px-2 py-1 text-[9px] tracking-widest text-cyber-green/35 border-b border-cyber-green/10">Activity</div>
+          <pre id="pane-activity" class="pane flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2 text-[10px] leading-snug whitespace-pre-wrap break-words text-cyber-green/65 m-0"></pre>
+        </div>
+
+        <!-- Center slot: Event Stream, Learn, or Defense -->
+        <div id="center-slot" class="col-[2] row-[1] min-w-0 flex flex-col overflow-hidden flex-1">
+        <!-- Event Stream: Security Incidents & Injection Types -->
+        <section class="panel feed lab-panel flex flex-col overflow-hidden border border-cyber-green/20 bg-cyber-void relative flex-1 min-h-0">
+          <canvas id="cyber-rain" class="absolute inset-0 w-full h-full pointer-events-none opacity-[0.2] z-0" aria-hidden="true"></canvas>
+          <div class="lab-panel-title relative z-10 flex items-center justify-between px-2 py-1.5 border-b border-cyber-green/20 flex-wrap gap-1">
+            <span class="text-[9px] tracking-widest text-cyber-cyan">EVENT STREAM</span>
+            <div class="event-stream-filters flex gap-0.5 items-center flex-wrap">
+              <button class="tab event-filter lab-tab px-2 py-0.5 text-[8px] tracking-wider border cursor-pointer transition-all is-active" data-tab="all">ALL</button>
+              <button class="tab event-filter lab-tab px-2 py-0.5 text-[8px] tracking-wider border cursor-pointer transition-all" data-tab="security">SECURITY</button>
+              <button class="tab event-filter lab-tab px-2 py-0.5 text-[8px] tracking-wider border cursor-pointer transition-all" data-tab="redteam">REDTEAM</button>
+              <button class="tab event-filter lab-tab px-2 py-0.5 text-[8px] tracking-wider border cursor-pointer transition-all" data-tab="analyst">ANALYST</button>
+              <button class="tab event-filter lab-tab px-2 py-0.5 text-[8px] tracking-wider border cursor-pointer transition-all" data-tab="alerts">ALERTS</button>
+              <button class="tab event-filter lab-tab px-2 py-0.5 text-[8px] tracking-wider border cursor-pointer transition-all" data-tab="system">SYSTEM</button>
+            </div>
+            <div class="flex gap-1 items-center flex-wrap">
+              <select id="chart-type" class="btn-cyber text-[8px] py-0.5 bg-cyber-void border border-cyber-green/30 text-cyber-cyan cursor-pointer" title="Chart type">
+                <option value="bar">BAR</option>
+                <option value="line">LINE</option>
+                <option value="pie">PIE</option>
+                <option value="doughnut">DOUGHNUT</option>
+              </select>
+              <button id="incidents-refresh" type="button" class="btn-cyber btn-cyber-cyan text-[8px] py-0.5">REFRESH</button>
+              <button id="graph-log-toggle" class="btn-cyber text-[8px] py-0.5" title="Toggle incident log">LOG</button>
+            </div>
+          </div>
+          <div id="security-incidents-container" class="relative z-10 flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div class="grid grid-cols-2 gap-2 p-2 border-b border-cyber-green/10 shrink-0">
+              <div class="border border-cyber-green/20 p-2 rounded">
+                <div class="text-[7px] text-cyber-green/35 uppercase">Incident rates</div>
+                <div class="flex flex-wrap gap-2 mt-1 text-[10px]">
+                  <span><strong id="inc-rate-1h" class="text-cyber-cyan">0</strong>/hr</span>
+                  <span><strong id="inc-rate-24h" class="text-cyber-cyan">0</strong>/24h</span>
+                  <span><strong id="inc-rate-7d" class="text-cyber-cyan">0</strong>/7d</span>
+                  <span><strong id="inc-total" class="text-cyber-green">0</strong> total</span>
+                </div>
+              </div>
+              <div class="border border-cyber-green/20 p-2 rounded">
+                <div class="text-[7px] text-cyber-green/35 uppercase">Injection types</div>
+                <div id="injection-types-legend" class="flex flex-wrap gap-1 mt-1 text-[9px] text-cyber-green/80"></div>
+              </div>
+            </div>
+            <div class="flex-1 min-h-0 relative p-2">
+              <canvas id="security-incidents-chart" class="w-full h-full block" aria-label="Injection types breakdown"></canvas>
+            </div>
+            <div id="graph-labels" class="flex flex-wrap gap-1 px-2 py-1 border-t border-cyber-green/20 bg-black/30 overflow-x-auto shrink-0 max-h-12 overflow-y-hidden hidden"></div>
+          </div>
+          <div id="pane-feed-wrap" class="hidden relative z-10 flex-1 min-h-0 overflow-hidden flex flex-col">
+            <div id="pane-feed" class="pane flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 text-[10px] leading-relaxed text-cyber-green/80 m-0 font-mono whitespace-pre-wrap"></div>
+          </div>
+        </section>
+
+        <!-- LEARN panel (Memory nav) -->
+        <section class="panel panel-learn lab-panel flex flex-col overflow-hidden border border-cyber-green/20 bg-cyber-void flex-1 min-h-0 hidden" id="panel-learn" style="display: none;">
+          <div class="lab-panel-title px-2 py-1.5 border-b border-cyber-green/20 text-[9px] tracking-widest text-cyber-cyan">MEMORY — Pattern Health</div>
+          <div id="learn-content" class="flex-1 overflow-y-auto p-3 flex flex-col gap-3"></div>
+        </section>
+
+        <!-- DEFENSE panel (Governance nav) -->
+        <section class="panel panel-defense lab-panel flex flex-col overflow-hidden border border-cyber-green/20 bg-cyber-void flex-1 min-h-0 hidden" id="panel-defense" style="display: none;">
+          <div class="lab-panel-title px-2 py-1.5 border-b border-cyber-green/20 text-[9px] tracking-widest text-cyber-cyan">GOVERNANCE — Adversary Intel</div>
+          <div id="defense-content" class="flex-1 overflow-y-auto p-3 flex flex-col gap-3"></div>
+        </section>
+
+        <!-- Interact panel (Chat) — chat panel moved here when active -->
+        <section class="panel panel-interact lab-panel flex flex-col overflow-hidden border border-cyber-green/20 bg-cyber-void flex-1 min-h-0 hidden" id="panel-interact" style="display: none;">
+          <div id="chat-panel-slot" class="flex flex-col flex-1 min-h-0 overflow-hidden"></div>
+        </section>
+
+        <!-- Lab panel (System log) — pane-system moved here when active -->
+        <section class="panel panel-lab lab-panel flex flex-col overflow-hidden border border-cyber-green/20 bg-cyber-void flex-1 min-h-0 hidden" id="panel-lab" style="display: none;">
+          <div class="lab-panel-title px-2 py-1.5 border-b border-cyber-green/20 text-[9px] tracking-widest text-cyber-cyan">LAB — System Log</div>
+          <div id="lab-system-slot" class="flex-1 min-h-0 overflow-hidden"></div>
+        </section>
+
+        <!-- Epidemic panel — Layer 4 / WoW SEIR model -->
+        <section class="panel panel-epidemic lab-panel flex flex-col overflow-hidden border border-cyber-green/20 bg-cyber-void flex-1 min-h-0 hidden" id="panel-epidemic" style="display: none;">
+          <div class="lab-panel-title flex items-center justify-between px-2 py-1.5 border-b border-cyber-green/20">
+            <span class="text-[9px] tracking-widest text-cyber-cyan">EPIDEMIC — Layer 4 Behavioral Drift / WoW SEIR Model</span>
+            <button id="epidemic-refresh" type="button" class="btn-cyber btn-cyber-cyan text-[8px] py-0.5">REFRESH</button>
+          </div>
+          <div id="epidemic-content" class="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
+            <!-- Top metric row -->
+            <div id="epidemic-metrics" class="flex flex-wrap gap-2"></div>
+            <!-- SEIR chart + signals + sim controls -->
+            <div class="flex gap-3 flex-wrap" style="min-height:240px;">
+              <!-- SEIR doughnut chart -->
+              <div class="flex flex-col border border-cyber-green/20 bg-cyber-surface p-2 rounded" style="min-width:220px;flex:1;">
+                <div class="text-[7px] text-cyber-green/35 uppercase mb-1">SEIR-C-R State Distribution</div>
+                <div style="position:relative;flex:1;min-height:180px;"><canvas id="seir-chart"></canvas></div>
+              </div>
+              <!-- Drift signals -->
+              <div class="flex flex-col border border-cyber-green/20 bg-cyber-surface p-2 rounded" style="min-width:200px;flex:1;">
+                <div class="text-[7px] text-cyber-green/35 uppercase mb-2">Layer 4 Drift Signals</div>
+                <div id="epidemic-signals" class="flex flex-col gap-1.5 flex-1"></div>
+                <div class="mt-2 border-t border-cyber-green/10 pt-2">
+                  <div class="text-[7px] text-cyber-green/35 uppercase mb-1">Epidemic Parameters</div>
+                  <div id="epidemic-params" class="text-[9px] text-cyber-green/65 font-mono flex flex-col gap-0.5"></div>
+                </div>
+              </div>
+              <!-- Simulation controls -->
+              <div class="flex flex-col border border-cyber-green/20 bg-cyber-surface p-2 rounded" style="min-width:190px;max-width:220px;">
+                <div class="text-[7px] text-cyber-green/35 uppercase mb-2">Infection Simulation</div>
+                <button id="sim-run-det" class="btn-cyber btn-cyber-green text-[8px] mb-1.5">Run Deterministic</button>
+                <button id="sim-run-llm" class="btn-cyber btn-cyber-cyan text-[8px] mb-2">Run LLM (Ollama)</button>
+                <div id="sim-run-status" class="text-[9px] text-cyber-green/50 mb-2 min-h-[1.2em]"></div>
+                <div class="text-[7px] text-cyber-green/35 uppercase mb-1">Last Run Stats</div>
+                <div id="epidemic-sim-stats" class="text-[9px] text-cyber-green/65 font-mono flex flex-col gap-0.5 flex-1 overflow-y-auto"></div>
+              </div>
+            </div>
+            <!-- Simulation event log -->
+            <div class="border border-cyber-green/20 bg-cyber-surface p-2 rounded flex flex-col" style="min-height:100px;max-height:200px;">
+              <div class="text-[7px] text-cyber-green/35 uppercase mb-1">Simulation Event Log</div>
+              <div id="epidemic-sim-log" class="flex-1 overflow-y-auto text-[9px] text-cyber-green/65 font-mono leading-snug"></div>
+            </div>
+          </div>
+        </section>
+        </div>
+
+        <!-- Security & Red Team -->
+        <div class="lab-panel flex flex-col overflow-hidden border border-cyber-green/20 bg-cyber-void col-[3] row-[1] min-w-0">
+          <div class="lab-panel-title px-2 py-1.5 border-b border-cyber-green/20 text-[9px] tracking-widest text-cyber-cyan">SECURITY &amp; RED TEAM</div>
+          <div class="grid grid-cols-2 gap-1.5 p-1.5">
+            <div class="border border-cyber-green/10 p-2">
+              <div class="text-[7px] text-cyber-green/35">DEFENSE RATE</div>
+              <div id="m-defense-rate" class="text-cyber-green font-bold">100%</div>
+            </div>
+            <div class="border border-cyber-green/10 p-2">
+              <div class="text-[7px] text-cyber-green/35">FP RATE</div>
+              <div id="m-fp" class="text-cyber-green font-bold">&mdash;</div>
+            </div>
+            <div class="border border-cyber-green/10 p-2">
+              <div class="text-[7px] text-cyber-green/35">RESILIENCE</div>
+              <div id="m-resilience" class="text-cyber-green font-bold">&mdash;</div>
+            </div>
+            <div class="border border-cyber-green/10 p-2">
+              <div class="text-[7px] text-cyber-green/35">REBARS</div>
+              <div id="m-rebars" class="text-cyber-green font-bold">&mdash;</div>
+            </div>
+            <div class="border border-cyber-green/10 p-2">
+              <div class="text-[7px] text-cyber-green/35">REWARD</div>
+              <div id="m-reward" class="text-cyber-yellow font-bold">0</div>
+            </div>
+            <div class="border border-cyber-green/10 p-2">
+              <div class="text-[7px] text-cyber-green/35">INJ</div>
+              <div id="m-inj" class="text-cyber-red font-bold">0</div>
+            </div>
+          </div>
+          <div class="px-2 py-1 border-b border-cyber-green/10">
+            <span class="text-[7px] text-cyber-green/35 uppercase">Defense History</span>
+            <div id="defense-history-bars" class="flex gap-0.5 mt-1 flex-wrap defense-history-bars"></div>
+          </div>
+          <div class="lab-panel-title px-2 py-1 text-[9px] tracking-widest text-cyber-green/35 border-b border-cyber-green/10">Recent Scans</div>
+          <div id="recent-scans-list" class="min-h-0 overflow-y-auto p-2 text-[10px] text-cyber-green/65 max-h-20"></div>
+          <div class="lab-panel-title px-2 py-1 text-[9px] tracking-widest text-cyber-green/35 border-b border-cyber-green/10">Alerts</div>
+          <pre id="pane-alerts" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2 text-[10px] leading-snug whitespace-pre-wrap break-words text-cyber-green/65 m-0"></pre>
+        </div>
+      </section>
+
+      <!-- Row 4: Behavioral | Community | Knowledge -->
+      <section class="lab-bottom grid grid-cols-3 gap-2 p-2 border-t border-cyber-green/20 bg-cyber-void shrink-0">
+        <div class="lab-panel flex flex-col overflow-hidden border border-cyber-green/20 bg-cyber-void min-h-0">
+          <div class="lab-panel-title px-2 py-1 border-b border-cyber-green/20 text-[9px] tracking-widest text-cyber-cyan">BEHAVIORAL TELEMETRY</div>
+          <div class="flex flex-wrap gap-1.5 p-1.5">
+            <div class="mchip flex items-center gap-1 border border-cyber-green/10 py-1 px-2 text-[10px]"><span class="text-[8px] text-cyber-green/35">CONF</span><span id="epi-conf" class="font-bold text-cyber-green">&mdash;</span></div>
+            <div class="mchip flex items-center gap-1 border border-cyber-green/10 py-1 px-2 text-[10px]"><span class="text-[8px] text-cyber-green/35">ENTROPY</span><span id="epi-ent" class="font-bold text-cyber-green">&mdash;</span></div>
+            <div class="mchip flex items-center gap-1 border border-cyber-green/10 py-1 px-2 text-[10px]"><span class="text-[8px] text-cyber-green/35">ANTHRO</span><span id="epi-anth" class="font-bold text-cyber-green">&mdash;</span></div>
+            <div class="mchip flex items-center gap-1 border border-cyber-green/10 py-1 px-2 text-[10px]"><span class="text-[8px] text-cyber-green/35">OVER</span><span id="epi-over" class="font-bold text-cyber-green">&mdash;</span></div>
+          </div>
+          <div class="flex gap-2 px-1.5 pb-1 text-[9px]">
+            <span class="text-cyber-green/35">CONF: <span id="f-conf" class="text-cyber-green">&mdash;</span></span>
+            <span class="text-cyber-green/35">ENT: <span id="f-ent" class="text-cyber-green">&mdash;</span></span>
+          </div>
+        </div>
+        <div id="chat-panel" class="lab-panel flex flex-col overflow-hidden border border-cyber-green/20 bg-cyber-void chat-panel-movable">
+          <div class="lab-panel-title flex items-center justify-between px-3 py-2 border-b border-cyber-green/20">
+            <span class="text-[9px] tracking-widest text-cyber-cyan">SANCTA GPT</span>
+            <div class="flex items-center gap-2">
+              <button id="chat-mode-toggle" class="btn-cyber text-[8px] px-2 py-0.5" title="Toggle chat/train mode">CHAT</button>
+              <button id="chat-train-btn" class="btn-cyber btn-cyber-cyan text-[8px] px-2 py-0.5" style="display:none" title="Run 50 training steps on existing corpus">TRAIN 50</button>
+              <button id="chat-clear" class="btn-cyber text-[8px] px-2 py-0.5 text-cyber-green/40" title="Clear chat">CLR</button>
+            </div>
+          </div>
+          <div id="gpt-status-bar" class="flex gap-3 px-2 py-1 text-[8px] text-cyber-green/50 border-b border-cyber-green/10 bg-cyber-black/50">
+            <span class="gpt-stat">SanctaGPT (non-auth)</span>
+            <span class="gpt-stat">loading...</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-2 py-0.5 text-[7px] text-cyber-green/45 border-b border-cyber-green/10 bg-cyber-black/40">
+            <span id="trust-research-banner" class="hidden font-bold text-amber-400/90">RESEARCH MODE — extended server telemetry; not production</span>
+            <span title="Char LM + routed Ollama/RAG — not authoritative SOC ground truth">SanctaGPT (non-authoritative)</span>
+            <label class="inline-flex items-center gap-1 cursor-pointer select-none">
+              <input type="checkbox" id="chat-train-on-exchange" class="accent-cyber-cyan" />
+              <span>Learn from chat (unsafe)</span>
+            </label>
+          </div>
+          <div id="chat-messages-wrap" class="flex-1 min-h-[40px] overflow-y-auto">
+            <div id="chat-messages" class="p-1.5 text-[10px] flex flex-col gap-1"></div>
+          </div>
+          <div class="flex gap-1 p-1.5 border-t border-cyber-green/20">
+            <input id="chat-input" type="text" placeholder="Chat with SanctaGPT..." maxlength="2000" class="flex-1 bg-cyber-black border border-cyber-green/20 text-cyber-green py-1 px-2 text-[10px]" />
+            <button id="chat-send" class="btn-cyber btn-cyber-cyan">SEND</button>
+          </div>
+        </div>
+        <div id="knowledge-base-panel" class="lab-panel flex flex-col overflow-hidden border border-cyber-green/20 bg-cyber-void">
+          <div class="lab-panel-title px-3 py-2 border-b border-cyber-green/20 text-[9px] tracking-widest text-cyber-cyan">KNOWLEDGE BASE</div>
+          <div class="flex flex-wrap gap-2 p-2">
+            <div class="mchip flex items-center gap-1 border border-cyber-green/10 py-1 px-2 text-[10px]"><span class="text-[8px] text-cyber-green/35">HIDDEN</span><span id="inj-hidden" class="font-bold text-cyber-green">0</span></div>
+            <div class="mchip flex items-center gap-1 border border-cyber-green/10 py-1 px-2 text-[10px]"><span class="text-[8px] text-cyber-green/35">UNICODE</span><span id="inj-unicode" class="font-bold text-cyber-green">0</span></div>
+            <div class="mchip flex items-center gap-1 border border-cyber-green/10 py-1 px-2 text-[10px]"><span class="text-[8px] text-cyber-green/35">PATTERNS</span><span id="inj-patterns" class="font-bold text-cyber-green">0</span></div>
+            <div class="mchip flex items-center gap-1 border border-cyber-green/10 py-1 px-2 text-[10px]"><span class="text-[8px] text-cyber-green/35">RATE</span><span id="inj-rate" class="font-bold text-cyber-green">&mdash;</span></div>
+          </div>
+          <div id="system-section-wrapper" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div class="lab-panel-title px-3 py-1 text-[9px] tracking-widest text-cyber-green/35 border-b border-cyber-green/10">System</div>
+            <pre id="pane-system" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2 text-[10px] leading-snug whitespace-pre-wrap break-words text-cyber-green/65 m-0"></pre>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

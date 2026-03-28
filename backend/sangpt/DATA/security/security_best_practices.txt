@@ -1,0 +1,1048 @@
+AI SECURITY BEST PRACTICES TRAINING DATA
+
+=== DESIGN PHASE SECURITY ===
+Principle: Threat modeling before development
+Start by identifying: What assets are we protecting? (models, data, service availability)
+Who are threats from? (external attackers, malicious users, insiders, supply chain)
+What attacks are we defending against? (adversarial examples, data poisoning, extraction)
+Result: Security architecture built into design, not added after.
+
+Principle: Privacy-by-design approach
+Implement: Data minimization - collect only necessary data
+Implement: Purpose limitation - use data only as intended
+Implement: Storage limitation - delete data when no longer needed
+Implement: Access controls - restrict who can see sensitive data
+Result: Privacy is fundamental, not an afterthought.
+
+Principle: Fail-safe defaults
+Design: Model defaults to safe/conservative behavior when uncertain
+Design: Blocked by default, allow-list for approved operations
+Design: Explicit opt-in required for risky features
+Design: Graceful degradation - reduce capability rather than bypass safety
+Result: Errors tend toward safety, not harm.
+
+Principle: Defense-in-depth
+Implement: Multiple layers of protection
+Implement: No single point of failure
+Implement: Partial failures don't compromise entire system
+Implement: Diversity of defensive techniques
+Result: System remains secure even if one defense layer fails.
+
+=== DATA SECURITY ===
+Practice: Data provenance tracking
+Track: Where data comes from (sources, collection methods)
+Track: Who modified the data (audit trail of changes)
+Track: When data was collected (temporal tracking)
+Benefit: Detect poisoning, verify authenticity, trace compromises.
+
+Practice: Data validation during collection
+Check: Data format against schema
+Check: Value ranges within expected bounds
+Check: Absence of malicious patterns
+Check: Statistical properties match expectations
+Benefit: Catch poisoned data early before it affects training.
+
+Practice: Differential privacy in training
+Add: Calibrated noise to training data
+Add: Privacy budgets limiting data information
+Add: Federated privacy guarantees
+Benefit: Prevents extraction attacks while maintaining model utility.
+
+Practice: Secure data storage
+Use: Encryption at rest with strong keys
+Use: Access controls with authentication
+Use: Network segmentation isolating data
+Use: Regular key rotation and audit
+Benefit: Data is protected even if infrastructure is compromised.
+
+=== MODEL DEVELOPMENT SECURITY ===
+Practice: Secure code review process
+Review: All code changes for security issues
+Review: Dependencies for known vulnerabilities
+Review: Configuration files for misconfigurations
+Review: Documentation for security implications
+Benefit: Catches security issues before deployment.
+
+Practice: Dependency management and monitoring
+Track: All external libraries and versions
+Monitor: Security advisories for dependencies
+Update: Patch vulnerabilities promptly
+Test: Updates don't introduce new issues
+Benefit: Supply chain vulnerabilities detected and remediated.
+
+Practice: Secure artifact storage and integrity
+Store: Model artifacts in secure repositories
+Verify: Cryptographic signatures of models
+Track: Version history with audit trails
+Control: Access to storage with authentication
+Benefit: Detect model theft or tampering.
+
+Practice: Staged training validation
+Validate: On clean training data
+Validate: Against known adversarial examples
+Validate: Across demographic subgroups
+Validate: For fairness and safety properties
+Benefit: Catch problems before production deployment.
+
+=== DEPLOYMENT SECURITY ===
+Practice: Containerization and isolation
+Use: Minimal base images with only required components
+Use: Read-only filesystems where possible
+Use: Resource limits (CPU, memory, disk)
+Use: No root execution
+Benefit: Limits damage if container is compromised.
+
+Practice: Network security
+Use: TLS/HTTPS for all communications
+Use: VPN or private networks for sensitive operations
+Use: API authentication and authorization
+Use: Rate limiting and DDoS protection
+Use: Network segmentation by sensitivity level
+Benefit: Encrypts and controls access to model APIs.
+
+Practice: Access control and authentication
+Use: Role-based access control (RBAC)
+Use: Multi-factor authentication for sensitive operations
+Use: Service accounts with minimal privileges
+Use: Regular access reviews and revocation
+Use: Audit logs of all access
+Benefit: Only authorized users can access sensitive models.
+
+Practice: Monitoring and alerting
+Monitor: Model performance on validation data
+Monitor: Input distribution changes
+Monitor: Output anomalies and unusual behaviors
+Monitor: Adversarial attack detection patterns
+Alert: On security-relevant events
+Benefit: Detects compromises or attacks in real-time.
+
+=== INCIDENT RESPONSE ===
+Practice: Incident response planning
+Prepare: Define roles and responsibilities
+Prepare: Document response procedures
+Prepare: Establish communication channels
+Prepare: Practice responses periodically
+Benefit: Fast, coordinated response to incidents.
+
+Practice: Forensic data preservation
+Log: All inputs and outputs for investigation
+Log: Access patterns and authentication events
+Log: Model behavior and performance metrics
+Retain: Logs for investigation period
+Benefit: Can investigate attacks after they occur.
+
+Practice: Controlled rollback procedures
+Maintain: Previous model versions securely
+Test: Rollback procedures before needed
+Document: Which versions safe to use
+Practice: Quick rollback in simulation
+Benefit: Can quickly revert to safe version if attack occurs.
+
+Practice: Post-incident analysis
+Analyze: Root cause of incident
+Analyze: What controls failed or were bypassed
+Improve: Defenses to prevent recurrence
+Share: Lessons learned with team
+Benefit: Each incident improves future security.
+
+=== CONTINUOUS IMPROVEMENT ===
+Practice: Regular security assessments
+Perform: Penetration testing of APIs and systems
+Perform: Security code audits by specialists
+Perform: Threat modeling updates as systems evolve
+Perform: Third-party security evaluations
+Benefit: Identifies security gaps before exploitation.
+
+Practice: Threat intelligence monitoring
+Monitor: Emerging attack trends and techniques
+Monitor: Vulnerabilities in AI systems specifically
+Monitor: Incidents at competitor organizations
+Monitor: New academic attack research
+Benefit: Defenses updated as threats evolve.
+
+Practice: Security training and culture
+Train: All staff on security responsibilities
+Train: Developers on secure coding practices
+Train: Operations on incident response
+Share: Security knowledge across organization
+Benefit: Security becomes everyone's responsibility.
+
+Practice: Responsible vulnerability disclosure
+Establish: Private security reporting channels
+Establish: Disclosure timelines with researchers
+Communicate: Transparently about vulnerabilities found
+Coordinate: Multi-vendor patches when applicable
+Benefit: Vulnerabilities fixed before public disclosure.
+
+=== SPECIAL CONSIDERATIONS ===
+For Large Language Models:
+- Guardrails and filtering for toxic outputs
+- Prompt injection resistance testing
+- Jailbreak scenario evaluation
+- Factuality calibration vs capability
+- Bias and fairness evaluation
+- Privacy of training data
+
+For Computer Vision:
+- Adversarial patch robustness
+- Physical world attack resistance
+- Deepfake detection and generation prevention
+- Biometric security against spoofing
+- Backdoor trigger detection
+- Distribution shift monitoring
+
+For Autonomous Systems:
+- Safety assurance even under attacks
+- Sensor spoofing and injection detection
+- Control flow integrity verification
+- Fail-safe behavior under uncertainty
+- Real-time attack detection
+- Recovery from compromised state
+
+For Healthcare AI:
+- Data privacy (HIPAA compliance)
+- Model reliability under adversarial conditions
+- Human oversight mechanisms
+- Transparency for medical professionals
+- Audit trails for regulatory compliance
+- Benefit-risk transparency
+
+=== SECURITY METRICS AND MEASUREMENT ===
+Metric: Adversarial robustness accuracy
+Measure: Accuracy on adversarially perturbed inputs
+Target: Maintain 90%+ accuracy under l-infinity perturbations up to epsilon=0.3
+Track: Improvements from robustness training
+
+Metric: Privacy loss
+Measure: Differential privacy epsilon
+Target: epsilon < 8 for user-level privacy
+Track: Privacy-utility tradeoff
+
+Metric: Model extraction resistance
+Measure: Attacker's success rate at replicating model behavior
+Target: <70% agreement in extraction attempts
+Track: Improvements in output obfuscation
+
+Metric: Poisoning attack success rate
+Measure: Impact of injected poisoned samples
+Target: <5% success rate even with 10% poisoned data
+Track: Robustness training effectiveness
+
+Metric: Mean time to detect (MTTD)
+Measure: Time from attack start to detection
+Target: <5 minutes for monitoring anomalies
+Track: Improvements in detection systems
+
+Metric: Mean time to respond (MTTR)
+Measure: Time from detection to remediation complete
+Target: <30 minutes for standard incident types
+Track: Improvements in response procedures
+
+=== SECURITY CHECKLIST ===
+Before Training:
+☐ Security requirements documented
+☐ Threat model created
+☐ Data privacy plan established
+☐ Access controls designed
+☐ Audit logging configured
+
+During Training:
+☐ Training data validated for poison
+☐ Model checkpoints monitored
+☐ Validation accuracy tracked
+☐ Anomalies detected and investigated
+☐ Audit logs retained
+
+Before Deployment:
+☐ Security testing completed
+☐ Adversarial evaluation done
+☐ Privacy audit passed
+☐ Access controls configured
+☐ Monitoring systems ready
+
+After Deployment:
+☐ Performance baseline established
+☐ Anomaly detection active
+☐ Access logging operational
+☐ Incident response tested
+☐ Regular security assessments scheduled
+
+=== API SECURITY BEST PRACTICES ===
+Practice: API authentication strategies
+Implement: Use OAuth 2.0 with short-lived access tokens and refresh token rotation
+Implement: Support multiple authentication schemes (API keys for server-to-server, JWT for user sessions)
+Implement: Enforce mutual TLS for high-sensitivity internal service communication
+Benefit: Prevents unauthorized access and limits blast radius of credential compromise.
+
+Practice: API gateway configuration
+Implement: Centralize authentication, rate limiting, and logging at the gateway layer
+Implement: Strip unnecessary headers and metadata before forwarding to backend services
+Implement: Deploy WAF rules at the gateway to block common injection patterns
+Benefit: Provides a single enforcement point for cross-cutting security concerns.
+
+Practice: API rate limiting design
+Implement: Apply tiered rate limits per user, per endpoint, and per IP address
+Implement: Use sliding window counters rather than fixed windows to prevent burst abuse
+Implement: Return 429 responses with Retry-After headers and quota reset information
+Benefit: Prevents abuse, credential stuffing, and resource exhaustion attacks.
+
+Practice: API versioning for security
+Implement: Maintain explicit version paths (v1, v2) and deprecation schedules
+Implement: Disable deprecated API versions after migration grace period expires
+Implement: Apply security patches to all supported versions simultaneously
+Benefit: Eliminates attack surface from outdated API versions with known vulnerabilities.
+
+Practice: API input validation
+Implement: Validate all input against strict schemas with allowlists for accepted values
+Implement: Reject unexpected fields, oversized payloads, and malformed content types
+Implement: Sanitize all string inputs for injection patterns before processing
+Benefit: Blocks injection attacks, parameter tampering, and payload-based exploits.
+
+Practice: GraphQL security
+Implement: Enforce query depth limits and complexity scoring to prevent resource exhaustion
+Implement: Disable introspection in production environments
+Implement: Apply field-level authorization checks rather than relying on resolver-level only
+Benefit: Prevents denial-of-service through deeply nested queries and unauthorized data access.
+
+Practice: Webhook security
+Implement: Sign all outbound webhook payloads with HMAC-SHA256 using per-subscriber secrets
+Implement: Validate webhook destination URLs against an allowlist before delivery
+Implement: Implement retry logic with exponential backoff and dead-letter queues for failures
+Benefit: Ensures webhook integrity and prevents SSRF through malicious callback URLs.
+
+Practice: API key rotation
+Implement: Support overlapping key validity windows to allow zero-downtime rotation
+Implement: Automate key rotation on a defined schedule with alerting for overdue rotations
+Implement: Immediately revoke keys upon detection of unauthorized usage patterns
+Benefit: Limits the exposure window of compromised credentials.
+
+Practice: API audit logging
+Implement: Log all API requests with timestamp, identity, endpoint, parameters, and response code
+Implement: Forward audit logs to a tamper-evident centralized logging system
+Implement: Retain API logs for compliance-mandated periods with immutable storage
+Benefit: Provides forensic evidence for incident investigation and compliance audits.
+
+Practice: API threat modeling
+Implement: Map all API endpoints with their authentication requirements and data sensitivity
+Implement: Identify trust boundaries between internal and external API consumers
+Implement: Perform OWASP API Top 10 assessment against every public-facing endpoint
+Benefit: Systematically identifies and prioritizes API-specific attack vectors.
+
+=== ZERO TRUST ARCHITECTURE ===
+Principle: Never trust always verify
+Implement: Authenticate and authorize every request regardless of network origin
+Implement: Treat internal network traffic with the same suspicion as external traffic
+Implement: Validate identity claims continuously rather than at session establishment only
+Benefit: Eliminates implicit trust that attackers exploit after initial network compromise.
+
+Principle: Micro-perimeter design
+Implement: Define protection boundaries around individual applications and data stores
+Implement: Enforce access policies at each micro-perimeter independently
+Implement: Monitor and log all cross-perimeter traffic for anomalous patterns
+Benefit: Contains breaches to a single application rather than the entire network.
+
+Principle: Continuous authentication
+Implement: Re-evaluate user risk score at each resource access, not just at login
+Implement: Factor in behavioral signals such as typing patterns and access timing
+Implement: Step up authentication requirements when risk score exceeds threshold
+Benefit: Detects session hijacking and credential theft in real time.
+
+Principle: Device trust scoring
+Implement: Assess device health (OS version, patch level, encryption status) before granting access
+Implement: Assign trust scores that dynamically adjust access privileges
+Implement: Block or quarantine devices that fail minimum security posture requirements
+Benefit: Prevents compromised or unmanaged devices from accessing sensitive resources.
+
+Principle: Network micro-segmentation
+Implement: Segment networks by workload sensitivity and communication requirements
+Implement: Enforce east-west traffic policies with allow-by-exception rules
+Implement: Monitor segment boundaries for unauthorized lateral movement attempts
+Benefit: Limits attacker lateral movement even after initial foothold.
+
+Principle: Software-defined perimeter
+Implement: Hide infrastructure from unauthorized users using single-packet authorization
+Implement: Establish encrypted tunnels only after identity and device verification
+Implement: Dynamically provision access paths based on real-time policy evaluation
+Benefit: Reduces attack surface by making resources invisible to unauthorized entities.
+
+Principle: Identity-aware proxy
+Implement: Route all application access through an identity-aware reverse proxy
+Implement: Enforce context-aware access decisions at the proxy before reaching the application
+Implement: Terminate and re-establish TLS at the proxy to inspect authorized traffic
+Benefit: Centralizes access control without requiring application-level changes.
+
+Principle: Least privilege access
+Implement: Grant minimum permissions required for each role and revoke immediately when unneeded
+Implement: Decompose broad roles into granular permissions aligned to specific tasks
+Implement: Audit privilege usage and remove permissions that remain unused after 90 days
+Benefit: Reduces damage potential from compromised accounts or insider threats.
+
+Principle: Session-based authentication
+Implement: Issue short-lived session tokens that expire within minutes for sensitive operations
+Implement: Bind sessions to device fingerprint and IP range to detect hijacking
+Implement: Require re-authentication for privilege escalation within active sessions
+Benefit: Limits the window of opportunity for stolen session tokens.
+
+Principle: Zero trust data security
+Implement: Classify data by sensitivity and apply encryption and access controls per classification
+Implement: Enforce data loss prevention policies at every egress point
+Implement: Monitor data access patterns and alert on anomalous bulk retrieval or export
+Benefit: Protects data even when network and identity controls are bypassed.
+
+=== CLOUD SECURITY BEST PRACTICES ===
+Practice: IAM policy hygiene
+Configure: Use policy conditions to restrict access by IP, time, and MFA status
+Monitor: Unused IAM roles and permissions with automated reporting every 30 days
+Benefit: Prevents privilege creep and reduces blast radius of compromised cloud credentials.
+
+Practice: Storage bucket security
+Configure: Enable default encryption, versioning, and access logging on all storage buckets
+Configure: Block public access at the account level and require explicit exceptions
+Monitor: Bucket policy changes and access patterns for unauthorized data exposure
+Benefit: Prevents accidental data exposure and enables recovery from ransomware.
+
+Practice: VPC and subnet design
+Configure: Isolate workloads by sensitivity tier using separate VPCs or subnets
+Configure: Use private subnets with NAT gateways for backend services without public IPs
+Monitor: VPC flow logs for unexpected traffic patterns and unauthorized connections
+Benefit: Limits network-level attack surface and enables granular traffic control.
+
+Practice: Cloud logging and monitoring
+Configure: Enable cloud audit logs for all services and forward to a centralized SIEM
+Configure: Set up real-time alerts for high-risk events (root login, policy changes, key creation)
+Monitor: Log completeness and retention to ensure forensic readiness
+Benefit: Provides visibility into cloud operations and enables rapid incident detection.
+
+Practice: Serverless security controls
+Configure: Apply least-privilege IAM roles to each function with no shared execution roles
+Configure: Set execution timeouts and memory limits to prevent resource abuse
+Monitor: Function invocation patterns and error rates for injection or abuse indicators
+Benefit: Reduces risk from overprivileged functions and limits exploitation impact.
+
+Practice: Container image scanning
+Configure: Scan all container images for known vulnerabilities before registry push
+Configure: Enforce image signing and admission control to block unsigned images
+Monitor: Running containers for drift from their original image and unexpected process execution
+Benefit: Prevents deployment of vulnerable or tampered container images.
+
+Practice: Kubernetes RBAC
+Configure: Define namespace-scoped roles with minimum required API permissions
+Configure: Disable default service account tokens and bind specific accounts per workload
+Monitor: RBAC policy changes and escalation attempts through audit log analysis
+Benefit: Prevents unauthorized cluster operations and limits compromise propagation.
+
+Practice: Cloud encryption key management
+Configure: Use cloud KMS with automatic key rotation on a defined schedule
+Configure: Separate key management roles from data access roles
+Monitor: Key usage logs for anomalous decryption patterns or unauthorized key operations
+Benefit: Maintains data confidentiality even if storage layer is compromised.
+
+Practice: Multi-cloud security posture
+Configure: Normalize identity and access policies across all cloud providers
+Configure: Deploy cloud security posture management (CSPM) tools spanning all environments
+Monitor: Configuration drift and compliance violations across all cloud accounts
+Benefit: Prevents security gaps from inconsistent policies across cloud providers.
+
+Practice: Cloud compliance automation
+Configure: Define compliance baselines as code and evaluate continuously against live infrastructure
+Configure: Auto-remediate common misconfigurations (open ports, missing encryption) with guardrails
+Monitor: Compliance posture dashboards with trend analysis and exception tracking
+Benefit: Maintains continuous compliance without manual audit overhead.
+
+Practice: Infrastructure as code security
+Configure: Scan IaC templates (Terraform, CloudFormation) for misconfigurations before apply
+Configure: Enforce IaC review policies requiring security approval for sensitive resource changes
+Monitor: Drift between deployed infrastructure and IaC source of truth
+Benefit: Catches security misconfigurations before they reach production environments.
+
+Practice: Cloud incident response
+Configure: Pre-provision forensic accounts and tooling in isolated cloud accounts
+Configure: Automate evidence collection (snapshots, logs, network captures) on incident trigger
+Monitor: Incident response playbook execution metrics and mean time to containment
+Benefit: Enables rapid cloud-native incident response without evidence loss.
+
+=== DEVSECOPS PRACTICES ===
+Practice: Shift-left security
+Integrate: Security requirements into user stories and acceptance criteria
+Automate: Security checks that run on every developer commit and pull request
+Benefit: Catches security issues at the earliest and cheapest point to fix.
+
+Practice: SAST in CI pipeline
+Integrate: Static application security testing as a mandatory CI pipeline stage
+Automate: Incremental scanning on changed files with full scans on scheduled builds
+Benefit: Identifies code-level vulnerabilities before they reach code review.
+
+Practice: DAST in staging
+Integrate: Dynamic application security testing against staging deployments after each build
+Automate: Authenticated scanning with test credentials covering all application roles
+Benefit: Finds runtime vulnerabilities that static analysis cannot detect.
+
+Practice: Dependency scanning automation
+Integrate: Software composition analysis into every build and pull request
+Automate: Block merges when critical or high severity vulnerabilities are found in dependencies
+Benefit: Prevents known vulnerable libraries from entering production.
+
+Practice: Container scanning
+Integrate: Image vulnerability scanning into the container build pipeline
+Automate: Enforce base image policies and reject builds using unapproved or EOL base images
+Benefit: Ensures only hardened and patched container images are deployed.
+
+Practice: Infrastructure as code scanning
+Integrate: IaC security linting into the pull request workflow for all infrastructure changes
+Automate: Policy-as-code checks for cloud security benchmarks (CIS, SOC 2)
+Benefit: Prevents infrastructure misconfigurations from reaching cloud environments.
+
+Practice: Secrets detection in code
+Integrate: Pre-commit hooks and CI checks that scan for hardcoded secrets and credentials
+Automate: Immediate alerting and credential rotation when secrets are detected in repositories
+Benefit: Prevents credential leakage through source code repositories.
+
+Practice: Security unit tests
+Integrate: Security-focused test cases for authentication, authorization, and input validation
+Automate: Run security unit tests as part of the standard test suite on every build
+Benefit: Validates that security controls function correctly as code evolves.
+
+Practice: Security gates in CI/CD
+Integrate: Mandatory security quality gates that block deployment on critical findings
+Automate: Dashboard reporting of security gate pass rates and common failure categories
+Benefit: Ensures no release bypasses minimum security standards.
+
+Practice: Developer security training
+Integrate: Hands-on secure coding labs into developer onboarding and quarterly refreshers
+Automate: Track training completion and correlate with security finding reduction rates
+Benefit: Builds security competence directly into the development team.
+
+Practice: Security champions program
+Integrate: Designate security champions in each development team as local security advocates
+Automate: Provide champions with dashboards showing their team's security posture and trends
+Benefit: Distributes security knowledge and accelerates security issue resolution.
+
+Practice: Threat modeling in agile
+Integrate: Lightweight threat modeling sessions at the start of each epic or feature
+Automate: Maintain threat model artifacts in version control alongside application code
+Benefit: Ensures security considerations keep pace with rapid development cycles.
+
+=== DATA PROTECTION AND PRIVACY ===
+Practice: Data classification framework
+Implement: Define classification levels (public, internal, confidential, restricted) with handling rules
+Implement: Label all data stores and pipelines with their classification level
+Implement: Enforce automated controls (encryption, access, retention) based on classification
+Benefit: Ensures proportionate protection based on data sensitivity.
+
+Practice: Data loss prevention (DLP)
+Implement: Deploy DLP agents at network egress, endpoint, and cloud storage boundaries
+Implement: Define content inspection rules for sensitive data patterns (PII, credentials, IP)
+Implement: Enforce blocking or quarantine actions for unauthorized data transfer attempts
+Benefit: Prevents accidental or malicious exfiltration of sensitive data.
+
+Practice: Encryption at rest best practices
+Implement: Use AES-256 or equivalent for all data at rest with envelope encryption
+Implement: Store encryption keys in dedicated key management systems separate from data
+Implement: Rotate encryption keys on a defined schedule without data re-encryption downtime
+Benefit: Protects data confidentiality even if physical storage is compromised.
+
+Practice: Encryption in transit standards
+Implement: Enforce TLS 1.3 as minimum for all external communications
+Implement: Use certificate pinning for mobile and high-sensitivity client applications
+Implement: Disable legacy cipher suites and protocols across all endpoints
+Benefit: Prevents eavesdropping and man-in-the-middle attacks on data in transit.
+
+Practice: Data masking and tokenization
+Implement: Mask PII in non-production environments using format-preserving techniques
+Implement: Use tokenization for payment card data and other high-sensitivity fields
+Implement: Maintain token vaults with strict access controls and audit logging
+Benefit: Reduces exposure of sensitive data in development, testing, and analytics.
+
+Practice: Privacy impact assessments
+Implement: Conduct PIAs before collecting new categories of personal data
+Implement: Document data flows, retention periods, and third-party sharing for each assessment
+Implement: Review and update PIAs when processing purposes or technologies change
+Benefit: Identifies and mitigates privacy risks before they affect data subjects.
+
+Practice: Data retention policies
+Implement: Define retention periods for each data category based on legal and business requirements
+Implement: Automate deletion or anonymization of data that exceeds its retention period
+Implement: Maintain deletion certificates and audit trails for compliance verification
+Benefit: Minimizes data exposure by eliminating data that is no longer needed.
+
+Practice: Cross-border data transfer
+Implement: Map all data flows that cross jurisdictional boundaries
+Implement: Apply appropriate transfer mechanisms (SCCs, BCRs, adequacy decisions) for each flow
+Implement: Monitor regulatory changes and update transfer mechanisms proactively
+Benefit: Ensures lawful international data transfers and avoids regulatory penalties.
+
+Practice: Data breach notification procedures
+Implement: Define notification timelines, escalation paths, and communication templates
+Implement: Pre-identify regulatory authorities and affected data subject contact methods
+Implement: Conduct tabletop exercises for breach notification scenarios quarterly
+Benefit: Ensures timely and compliant notification that minimizes legal and reputational damage.
+
+Practice: Data subject access requests
+Implement: Build automated workflows to locate, extract, and deliver personal data on request
+Implement: Verify requestor identity before disclosing any personal information
+Implement: Track request fulfillment against regulatory deadlines with escalation alerts
+Benefit: Meets data subject rights obligations efficiently and within required timeframes.
+
+=== IDENTITY AND ACCESS MANAGEMENT ===
+Practice: Identity lifecycle management
+Implement: Automate provisioning and deprovisioning tied to HR system events (hire, transfer, exit)
+Implement: Enforce mandatory access review within 24 hours of role changes
+Implement: Disable accounts immediately upon termination with automated credential revocation
+Benefit: Eliminates orphaned accounts and access that outlives its business justification.
+
+Practice: Privileged access management
+Implement: Vault all privileged credentials with just-in-time checkout and session recording
+Implement: Require dual authorization for access to the most sensitive administrative functions
+Implement: Rotate privileged credentials automatically after each use or on a fixed schedule
+Benefit: Reduces risk of privileged credential theft and enables forensic accountability.
+
+Practice: Service account governance
+Implement: Inventory all service accounts with documented owners and purpose justifications
+Implement: Apply dedicated credentials per service account with no shared or generic accounts
+Implement: Review service account permissions quarterly and remove unused accounts
+Benefit: Prevents lateral movement through overprivileged or abandoned service accounts.
+
+Practice: Just-in-time access
+Implement: Replace standing privileges with time-bound access granted on request and approval
+Implement: Automatically revoke elevated access when the approved time window expires
+Implement: Log all JIT access requests, approvals, and usage for audit trails
+Benefit: Minimizes the window of opportunity for compromised privileged accounts.
+
+Practice: Conditional access policies
+Implement: Evaluate device compliance, location, and risk score before granting access
+Implement: Require step-up authentication for access from untrusted networks or devices
+Implement: Block access entirely when risk signals exceed defined thresholds
+Benefit: Adapts access controls dynamically based on real-time threat context.
+
+Practice: Identity federation standards
+Implement: Use SAML 2.0 or OpenID Connect for single sign-on across all enterprise applications
+Implement: Centralize identity provider configuration with consistent MFA enforcement
+Implement: Monitor federated authentication flows for token replay and assertion manipulation
+Benefit: Simplifies identity management while maintaining consistent security controls.
+
+Practice: Password policy modernization (NIST 800-63B)
+Implement: Require minimum 8-character passwords checked against breach corpuses
+Implement: Eliminate mandatory rotation periods and complexity rules that encourage weak patterns
+Implement: Support and encourage passkeys and FIDO2 authenticators as primary credentials
+Benefit: Improves actual password security by aligning with evidence-based guidance.
+
+Practice: Certificate-based authentication
+Implement: Deploy X.509 certificates for machine-to-machine and high-assurance user authentication
+Implement: Automate certificate lifecycle including issuance, renewal, and revocation
+Implement: Monitor certificate expiration and revocation status in real time
+Benefit: Provides strong cryptographic identity verification resistant to phishing.
+
+Practice: Identity threat detection
+Implement: Baseline normal authentication patterns and alert on deviations (impossible travel, brute force)
+Implement: Correlate identity events across applications to detect coordinated account compromise
+Implement: Automate account lockout or step-up challenges when threat indicators are detected
+Benefit: Detects and responds to identity-based attacks before they achieve objectives.
+
+Practice: Access review automation
+Implement: Schedule periodic access certification campaigns with automated reviewer assignment
+Implement: Provide reviewers with usage data showing last access date and frequency per entitlement
+Implement: Auto-revoke access that is not certified within the review deadline
+Benefit: Ensures access remains appropriate over time without manual tracking overhead.
+
+=== SECURE SOFTWARE DEVELOPMENT ===
+Practice: Secure design principles
+Implement: Apply least privilege, defense in depth, and fail-secure patterns in all architectural decisions
+Implement: Document security assumptions and trust boundaries in design documents
+Implement: Require security architecture review for all new services and major feature changes
+Benefit: Builds security into the foundation rather than retrofitting after development.
+
+Practice: Threat modeling methodology (STRIDE)
+Implement: Decompose system into components, data flows, and trust boundaries using DFDs
+Implement: Systematically evaluate each element for Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, and Elevation of Privilege
+Implement: Prioritize identified threats using risk scoring and track mitigations to completion
+Benefit: Provides structured identification of threats that informal review would miss.
+
+Practice: Security requirements gathering
+Implement: Derive security requirements from threat models, compliance mandates, and risk assessments
+Implement: Express security requirements as testable acceptance criteria in user stories
+Implement: Maintain a security requirements library for common patterns (auth, input validation, logging)
+Benefit: Ensures security needs are explicit, traceable, and verifiable throughout development.
+
+Practice: Secure coding standards
+Implement: Adopt language-specific secure coding guidelines (OWASP, CERT, vendor guides)
+Implement: Enforce coding standards through automated linters and code review checklists
+Implement: Update standards annually to address emerging vulnerability classes
+Benefit: Prevents common vulnerability patterns through consistent developer guidance.
+
+Practice: Code signing and integrity
+Implement: Sign all release artifacts with organization-managed keys verified in deployment pipelines
+Implement: Validate signatures at every deployment stage to detect tampering
+Implement: Protect signing keys in HSMs with strict access controls and audit logging
+Benefit: Guarantees that deployed code has not been modified since it was built.
+
+Practice: Dependency management
+Implement: Pin all dependency versions and use lock files to ensure reproducible builds
+Implement: Evaluate new dependencies for security posture, maintenance status, and license compliance
+Implement: Mirror approved dependencies in an internal registry to prevent supply chain substitution
+Benefit: Controls supply chain risk from third-party code.
+
+Practice: Open source license compliance
+Implement: Scan all dependencies for license obligations using automated tooling
+Implement: Maintain an approved license allowlist aligned with legal and business requirements
+Implement: Document and fulfill attribution and disclosure obligations for each used license
+Benefit: Avoids legal liability and protects proprietary code from unintended disclosure.
+
+Practice: Security testing strategy
+Implement: Combine SAST, DAST, IAST, and manual penetration testing for comprehensive coverage
+Implement: Define test coverage targets for security-critical code paths (authentication, authorization, crypto)
+Implement: Integrate security test results into developer dashboards for visibility and accountability
+Benefit: Catches vulnerabilities across the full spectrum of static, dynamic, and logic flaws.
+
+Practice: Security documentation
+Implement: Maintain threat models, security architecture diagrams, and runbooks in version control
+Implement: Document all security controls with their purpose, configuration, and failure modes
+Implement: Update security documentation as part of the definition of done for every feature
+Benefit: Enables consistent security operations and accelerates incident response.
+
+Practice: Release security checklist
+Implement: Verify all security tests pass, dependencies are scanned, and secrets are absent before release
+Implement: Confirm monitoring and alerting are configured for the new release
+Implement: Validate rollback procedures and ensure previous secure version is available
+Benefit: Prevents releases with known security deficiencies from reaching production.
+
+=== THIRD-PARTY RISK MANAGEMENT ===
+Practice: Vendor security assessment
+Evaluate: Request and review SOC 2 Type II, ISO 27001, or equivalent certifications
+Evaluate: Assess vendor security controls against your data sensitivity and regulatory requirements
+Monitor: Track remediation of identified gaps with defined timelines and escalation paths
+Benefit: Ensures vendors meet minimum security standards before granting data access.
+
+Practice: Supply chain risk evaluation
+Evaluate: Map all software supply chain dependencies including transitive and build-time components
+Evaluate: Assess each supplier's security maturity, incident history, and business continuity posture
+Monitor: Track supplier security posture changes and reassess risk when significant events occur
+Benefit: Identifies and mitigates risks from compromised or unreliable supply chain participants.
+
+Practice: SaaS security posture
+Evaluate: Review SaaS provider data handling, encryption, access controls, and shared responsibility model
+Evaluate: Verify tenant isolation, data residency, and backup capabilities meet requirements
+Monitor: SaaS provider security advisories and configuration drift from your security baseline
+Benefit: Maintains security control visibility in environments you do not directly manage.
+
+Practice: Fourth-party risk
+Evaluate: Identify critical subcontractors and subprocessors used by your direct vendors
+Evaluate: Assess whether vendor contracts require notification of significant subprocessor changes
+Monitor: Track fourth-party incidents that could propagate risk through your supply chain
+Benefit: Prevents hidden risk from vendors outsourcing to insecure parties.
+
+Practice: Vendor contract security requirements
+Evaluate: Include data protection, breach notification, and audit rights in all vendor contracts
+Evaluate: Define security SLAs with measurable requirements and penalties for non-compliance
+Monitor: Contract compliance through periodic vendor attestation and right-to-audit exercises
+Benefit: Establishes legally enforceable security obligations for all third parties.
+
+Practice: Continuous vendor monitoring
+Evaluate: Baseline vendor security posture at onboarding using security ratings and questionnaires
+Evaluate: Define risk-tiered monitoring frequency (quarterly for critical, annually for low-risk vendors)
+Monitor: Vendor security ratings, breach disclosures, and regulatory actions in real time
+Benefit: Detects vendor security degradation between periodic assessments.
+
+Practice: Vendor incident response coordination
+Evaluate: Establish shared incident response procedures and communication channels with critical vendors
+Evaluate: Define escalation paths and SLAs for vendor-originated security incidents
+Monitor: Vendor incident response performance and incorporate lessons into your own playbooks
+Benefit: Ensures coordinated and timely response when vendor incidents affect your organization.
+
+Practice: Vendor offboarding security
+Evaluate: Define data return, deletion, and certification requirements before contract termination
+Evaluate: Revoke all vendor access credentials, VPN connections, and API keys upon offboarding
+Monitor: Verify data deletion completion with certificates of destruction and post-offboarding audits
+Benefit: Eliminates residual access and data exposure after vendor relationships end.
+
+=== OPERATIONAL SECURITY ===
+Practice: Change management security
+Implement: Require security impact assessment for all changes to production systems
+Implement: Enforce separation of duties between change requestors, approvers, and implementers
+Implement: Maintain rollback plans and verify them before applying changes to production
+Benefit: Prevents unauthorized or poorly assessed changes from introducing vulnerabilities.
+
+Practice: Configuration management database (CMDB)
+Implement: Maintain an accurate inventory of all hardware, software, and configuration items
+Implement: Track configuration relationships and dependencies between systems
+Implement: Reconcile CMDB against live infrastructure to detect unauthorized changes
+Benefit: Provides the foundation for vulnerability management and incident response.
+
+Practice: Patch management lifecycle
+Implement: Classify patches by severity and define SLAs (critical within 72 hours, high within 14 days)
+Implement: Test patches in staging environments that mirror production before deployment
+Implement: Track patch compliance rates across all systems with automated reporting
+Benefit: Closes known vulnerability windows while minimizing operational disruption.
+
+Practice: Backup and recovery testing
+Implement: Perform automated backups with encryption for all critical systems and data stores
+Implement: Test restoration procedures quarterly with measured recovery time objectives
+Implement: Store backups in geographically separate locations with independent access controls
+Benefit: Ensures reliable recovery from ransomware, corruption, or catastrophic failure.
+
+Practice: Disaster recovery planning
+Implement: Define recovery time objectives (RTO) and recovery point objectives (RPO) per system tier
+Implement: Maintain documented failover procedures with assigned roles and contact information
+Implement: Conduct full disaster recovery exercises annually with lessons-learned reviews
+Benefit: Ensures business continuity under worst-case scenarios including cyberattacks.
+
+Practice: Business impact analysis
+Implement: Assess operational and financial impact of downtime for each critical system
+Implement: Identify dependencies between systems to understand cascading failure risks
+Implement: Prioritize security investments based on business impact rather than technical severity alone
+Benefit: Aligns security spending with actual business risk.
+
+Practice: Capacity planning for security
+Implement: Size security infrastructure (SIEM, log storage, scanning) for peak load plus growth
+Implement: Monitor security tool performance and capacity utilization with trend forecasting
+Implement: Plan for surge capacity during active incident investigation and response
+Benefit: Prevents security monitoring gaps caused by infrastructure capacity exhaustion.
+
+Practice: Security operations center design
+Implement: Define SOC operating model (in-house, hybrid, or managed) based on threat landscape and budget
+Implement: Establish tiered analyst structure with clear escalation procedures and response playbooks
+Implement: Measure SOC effectiveness through MTTD, MTTR, and false positive rates
+Benefit: Provides organized, continuous security monitoring and response capability.
+
+Practice: Security automation strategy
+Implement: Identify repetitive security tasks suitable for automation (enrichment, triage, containment)
+Implement: Deploy SOAR platforms to orchestrate multi-tool response workflows
+Implement: Measure automation effectiveness through analyst time saved and response time improvement
+Benefit: Accelerates response, reduces human error, and frees analysts for complex investigations.
+
+Practice: Security tool rationalization
+Implement: Inventory all security tools with their capabilities, costs, and integration status
+Implement: Eliminate redundant tools and consolidate overlapping capabilities
+Implement: Evaluate tool effectiveness through coverage metrics and detection rate analysis
+Benefit: Reduces complexity and cost while improving overall security coverage.
+
+=== MOBILE AND ENDPOINT SECURITY ===
+Practice: Mobile application security
+Implement: Perform OWASP MASVS assessment on all mobile applications before release
+Implement: Enforce certificate pinning, secure local storage, and anti-tampering controls
+Implement: Disable debugging, logging of sensitive data, and insecure IPC in release builds
+Benefit: Protects mobile applications from reverse engineering and data theft.
+
+Practice: BYOD security framework
+Implement: Require device enrollment in MDM with minimum security baseline (encryption, lock screen, OS version)
+Implement: Containerize corporate data and applications separately from personal content
+Implement: Enable remote wipe of corporate data without affecting personal data on lost devices
+Benefit: Enables workforce flexibility while maintaining control over corporate data.
+
+Practice: Endpoint detection and response
+Implement: Deploy EDR agents on all endpoints with behavioral analysis and threat hunting capability
+Implement: Configure automated containment actions for high-confidence threats (network isolation, process kill)
+Implement: Integrate EDR telemetry into SIEM for cross-endpoint correlation and investigation
+Benefit: Detects and contains advanced threats that signature-based antivirus misses.
+
+Practice: Endpoint hardening baselines
+Implement: Apply CIS benchmarks or equivalent hardening guides to all endpoint operating systems
+Implement: Disable unnecessary services, ports, and protocols on all managed endpoints
+Implement: Enforce application allowlisting on high-sensitivity endpoints
+Benefit: Reduces attack surface by eliminating unnecessary functionality.
+
+Practice: Removable media controls
+Implement: Block unauthorized USB devices and removable storage through endpoint policy
+Implement: Allow only encrypted and organization-approved removable media with audit logging
+Implement: Scan all permitted removable media for malware before content access
+Benefit: Prevents data exfiltration and malware introduction through physical media.
+
+Practice: Browser isolation
+Implement: Route high-risk web browsing through remote browser isolation platforms
+Implement: Strip active content (scripts, macros) from downloads passing through isolation
+Implement: Apply URL categorization policies to direct untrusted sites through isolation
+Benefit: Contains web-based attacks without blocking user access to needed resources.
+
+Practice: Virtual desktop security
+Implement: Harden VDI images with baseline security controls and regular patching
+Implement: Enforce session timeouts and restrict clipboard, drive mapping, and printing by policy
+Implement: Monitor VDI sessions for anomalous behavior and unauthorized data transfer
+Benefit: Centralizes endpoint security and data protection for remote workforces.
+
+Practice: Endpoint compliance monitoring
+Implement: Continuously assess endpoint security posture against defined compliance baselines
+Implement: Quarantine or limit access for endpoints that fall out of compliance
+Implement: Report compliance rates by department and platform with trend analysis
+Benefit: Ensures consistent security posture across the entire endpoint fleet.
+
+=== NETWORK DEFENSE ===
+Practice: Network architecture review
+Implement: Document all network segments, trust zones, and traffic flows annually
+Implement: Verify that network segmentation enforces the principle of least connectivity
+Monitor: Network topology changes and validate them against the approved architecture
+Benefit: Ensures network design supports security objectives and detects unauthorized changes.
+
+Practice: DNS security implementation
+Implement: Deploy DNSSEC to prevent DNS spoofing and cache poisoning attacks
+Implement: Use DNS filtering to block access to known malicious and phishing domains
+Monitor: DNS query logs for tunneling, DGA patterns, and communication with threat infrastructure
+Benefit: Protects a foundational protocol that most other security controls depend on.
+
+Practice: Email security (DMARC/DKIM/SPF)
+Implement: Publish SPF records limiting authorized sending sources for all domains
+Implement: Configure DKIM signing for all outbound email with regular key rotation
+Monitor: DMARC aggregate and forensic reports to detect domain spoofing attempts
+Benefit: Prevents email spoofing and phishing using your organization's domains.
+
+Practice: Web application firewall tuning
+Implement: Deploy WAF in front of all public-facing web applications with OWASP Core Rule Set
+Implement: Tune rules iteratively to minimize false positives while maintaining detection coverage
+Monitor: WAF logs for attack patterns and adjust rules based on emerging threat intelligence
+Benefit: Blocks common web attacks while maintaining application availability.
+
+Practice: Intrusion detection optimization
+Implement: Deploy network IDS at all trust zone boundaries and internet egress points
+Implement: Tune signature and anomaly rules based on baseline traffic patterns
+Monitor: IDS alert quality metrics and reduce false positive rates through continuous tuning
+Benefit: Detects network-based attacks with high fidelity and minimal alert fatigue.
+
+Practice: Network traffic analysis
+Implement: Capture and analyze network metadata (NetFlow, IPFIX) for all segments
+Implement: Baseline normal traffic patterns and detect deviations indicating compromise
+Monitor: Long-duration connections, beaconing patterns, and unusual data transfer volumes
+Benefit: Detects command-and-control, exfiltration, and lateral movement through traffic behavior.
+
+Practice: Encrypted traffic inspection
+Implement: Deploy TLS inspection at network boundaries for outbound traffic to detect threats
+Implement: Maintain certificate trust through transparent proxy with managed CA certificates
+Monitor: Inspection bypass attempts and maintain exception lists for privacy-sensitive destinations
+Benefit: Prevents attackers from hiding malicious activity inside encrypted channels.
+
+Practice: Lateral movement prevention
+Implement: Restrict SMB, RDP, WMI, and PowerShell remoting to only authorized admin workstations
+Implement: Deploy credential guard and protected users groups to prevent credential harvesting
+Monitor: Authentication patterns between workstations and alert on anomalous admin tool usage
+Benefit: Blocks the primary techniques attackers use to spread after initial compromise.
+
+Practice: Network access control
+Implement: Enforce 802.1X authentication for all wired and wireless network connections
+Implement: Assign devices to network segments based on identity, role, and health status
+Monitor: NAC policy violations and rogue device connection attempts
+Benefit: Prevents unauthorized devices from gaining network access.
+
+Practice: Wireless security standards
+Implement: Deploy WPA3 Enterprise with certificate-based authentication on all wireless networks
+Implement: Segment guest wireless from corporate networks with no lateral access
+Monitor: Wireless spectrum for rogue access points and evil twin attacks
+Benefit: Secures wireless access while detecting physical-layer attacks.
+
+=== SECURITY AWARENESS AND TRAINING ===
+Practice: Role-based security training
+Implement: Tailor training content to job function (developers, executives, HR, operations)
+Implement: Deliver training through interactive scenarios relevant to each role's daily activities
+Measure: Training effectiveness through pre/post assessments and behavioral change metrics
+Benefit: Ensures each role understands and can apply the security practices relevant to their work.
+
+Practice: Phishing simulation program
+Implement: Conduct monthly phishing simulations with progressively sophisticated scenarios
+Implement: Provide immediate coaching when users interact with simulated phishing messages
+Measure: Click rates, report rates, and time-to-report trends over successive campaigns
+Benefit: Builds phishing recognition skills through realistic practice and feedback.
+
+Practice: Social engineering awareness
+Implement: Train staff to recognize pretexting, vishing, tailgating, and baiting techniques
+Implement: Establish verification procedures for requests involving sensitive data or access changes
+Measure: Incident reports of social engineering attempts and successful interventions
+Benefit: Creates a human firewall against manipulation-based attacks.
+
+Practice: Secure development training
+Implement: Provide hands-on labs for OWASP Top 10 vulnerabilities in relevant programming languages
+Implement: Integrate secure coding exercises into developer onboarding and annual refresher programs
+Measure: Reduction in security findings per developer over successive code review cycles
+Benefit: Embeds security knowledge directly into the development workflow.
+
+Practice: Incident response drills
+Implement: Conduct tabletop exercises quarterly simulating realistic breach scenarios
+Implement: Run live-fire exercises annually with red team and blue team participation
+Measure: Decision quality, communication effectiveness, and time to containment during exercises
+Benefit: Builds muscle memory for incident response and identifies process gaps before real incidents.
+
+Practice: Executive security briefings
+Implement: Deliver monthly security posture briefings to executive leadership with risk metrics
+Implement: Present threat landscape updates relevant to the organization's industry and geography
+Measure: Executive engagement through questions asked and security investment decisions made
+Benefit: Ensures security has leadership visibility and adequate resource allocation.
+
+Practice: New hire security onboarding
+Implement: Deliver security orientation within the first week covering policies, tools, and reporting
+Implement: Assign a security buddy for the first 30 days to answer questions and reinforce practices
+Measure: Time to complete onboarding modules and comprehension assessment scores
+Benefit: Establishes security habits from day one rather than retrofitting behavior later.
+
+Practice: Security newsletter and communication
+Implement: Publish monthly security newsletters with recent threats, tips, and policy updates
+Implement: Maintain an internal security portal with searchable policy documents and FAQs
+Measure: Newsletter engagement rates and portal page views per employee
+Benefit: Keeps security awareness current between formal training sessions.
+
+=== AI-SPECIFIC SECURITY PRACTICES ===
+Practice: Model security assessment
+Implement: Evaluate model attack surface including API endpoints, input channels, and data flows
+Implement: Test for model-specific vulnerabilities (extraction, inversion, membership inference)
+Evaluate: Risk level based on model sensitivity, deployment context, and attacker capability
+Benefit: Identifies AI-specific risks that traditional security assessments overlook.
+
+Practice: Training data validation
+Implement: Verify training data provenance, licensing, and integrity before use
+Implement: Screen datasets for poisoning indicators, outliers, and distributional anomalies
+Evaluate: Data quality metrics including completeness, consistency, and representativeness
+Benefit: Prevents model compromise through corrupted or manipulated training data.
+
+Practice: Adversarial robustness evaluation
+Implement: Test models against known adversarial attack methods (FGSM, PGD, C&W) for the domain
+Implement: Evaluate model behavior under distribution shift and out-of-domain inputs
+Evaluate: Robustness metrics across attack budgets and compare against baseline performance
+Benefit: Quantifies model resilience and identifies weaknesses before adversaries exploit them.
+
+Practice: Model access control
+Implement: Apply authentication and authorization to all model inference endpoints
+Implement: Enforce per-user query quotas to prevent model extraction through excessive querying
+Evaluate: Access patterns for anomalies indicating extraction or abuse attempts
+Benefit: Prevents unauthorized model use and makes extraction attacks economically infeasible.
+
+Practice: AI output monitoring
+Implement: Log all model inputs and outputs with metadata for anomaly detection and audit
+Implement: Deploy content filters to detect and block harmful, biased, or policy-violating outputs
+Evaluate: Output quality distributions over time to detect model degradation or manipulation
+Benefit: Catches harmful outputs before they reach end users and detects model drift.
+
+Practice: Prompt injection prevention
+Implement: Separate system instructions from user inputs using architectural boundaries
+Implement: Validate and sanitize all user-provided inputs before passing to language models
+Evaluate: Model behavior under known prompt injection techniques and jailbreak patterns
+Benefit: Prevents attackers from hijacking model behavior through crafted inputs.
+
+Practice: Model versioning and rollback
+Implement: Maintain immutable, signed model artifacts for all deployed versions
+Implement: Enable rapid rollback to previous model versions when security issues are discovered
+Evaluate: Rollback procedures through regular testing to ensure recovery time meets SLAs
+Benefit: Enables fast recovery from compromised or degraded model deployments.
+
+Practice: AI incident response planning
+Implement: Define AI-specific incident types (model poisoning, extraction, adversarial attack, bias event)
+Implement: Develop response playbooks covering detection, containment, and recovery for each type
+Evaluate: Response procedures through tabletop exercises simulating AI-specific attack scenarios
+Benefit: Ensures prepared and practiced response to AI security incidents.
+
+Practice: Model explainability for security
+Implement: Deploy interpretability tools to understand model decision rationale for security-critical outputs
+Implement: Generate feature attribution reports for flagged predictions to support human review
+Evaluate: Whether explanations accurately reflect model reasoning and are useful for security analysts
+Benefit: Enables security teams to distinguish legitimate model behavior from adversarial manipulation.
+
+Practice: AI compliance and ethics
+Implement: Establish an AI ethics review board to evaluate high-risk AI deployments
+Implement: Document model purpose, limitations, and potential harms in model cards for every deployment
+Evaluate: Compliance against applicable AI regulations (EU AI Act, NIST AI RMF, sector-specific rules)
+Benefit: Ensures AI deployments meet ethical standards and regulatory requirements.
+
+Practice: Red-teaming AI systems
+Implement: Conduct regular red team exercises specifically targeting AI model vulnerabilities
+Implement: Include diverse red team expertise (ML security, social engineering, domain-specific attacks)
+Evaluate: Red team findings against threat model and prioritize mitigations by exploitability and impact
+Benefit: Discovers real-world attack paths through adversarial testing by skilled practitioners.
+
+Practice: AI security metrics
+Implement: Track adversarial robustness accuracy, prompt injection success rate, and model drift scores
+Implement: Measure mean time to detect and respond to AI-specific security incidents
+Evaluate: Metric trends over time to assess whether AI security posture is improving or degrading
+Benefit: Provides quantitative evidence for AI security investment decisions and maturity assessment.

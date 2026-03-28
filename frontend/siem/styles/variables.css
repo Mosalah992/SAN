@@ -1,0 +1,63 @@
+/* ─── Design Tokens ──────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --bg-deep:     #080810;
+  --bg-surface:  #0e1018;
+  --bg-panel:    #0f1020;
+  --bg-elevated: #161828;
+
+  /* Accent palette */
+  --cyan:    #00fff2;
+  --magenta: #ff2d7b;
+  --amber:   #ffb800;
+  --green:   #39ff14;
+  --red:     #ff1744;
+  --purple:  #a855f7;
+  --blue:    #3b82f6;
+
+  /* Accent at 15% opacity (tints) */
+  --tint-cyan:    rgba(0,255,242,.07);
+  --tint-magenta: rgba(255,45,123,.07);
+  --tint-amber:   rgba(255,184,0,.07);
+  --tint-green:   rgba(57,255,20,.07);
+
+  /* Text */
+  --text-primary:   #e0e0f0;
+  --text-secondary: #8888aa;
+  --text-muted:     #444460;
+  --text-ghost:     #2a2a40;
+
+  /* Fonts */
+  --font-chrome:   'IBM Plex Sans', system-ui, sans-serif;
+  --font-terminal: 'JetBrains Mono', 'Courier New', monospace;
+  --font-stat:     'Space Grotesk', system-ui, sans-serif;
+
+  /* Layout */
+  --topbar-h:    48px;
+  --bottombar-h: 40px;
+  --main-h:      calc(100vh - var(--topbar-h) - var(--bottombar-h));
+  --gap:         8px;
+
+  /* Panel heights */
+  --ph-sm: 120px;
+  --ph-md: 280px;
+  --ph-lg: min(52vh, 560px); /* dashboard feed row: grows with viewport, caps on tall screens */
+  --ph-xl: 560px;
+
+  /* Timing */
+  --t-fast: 150ms;
+
+  /* Radii */
+  --r-btn:  10px;
+  --r-card: 12px;
+  --r-pill: 20px;
+
+  /* Borders */
+  --border: 1px solid #1a1a2e;
+  --border-bright: 1px solid #2a2a50;
+
+  /* Shadows */
+  --shadow-card: 0 2px 12px rgba(0,0,0,.4);
+  --shadow-glow-cyan:    0 0 12px rgba(0,255,242,.25);
+  --shadow-glow-magenta: 0 0 12px rgba(255,45,123,.25);
+}

@@ -1,0 +1,28 @@
+{
+  "default_pack": "office_peon",
+  "packs": {
+    "office_peon": {
+      "session.start": [
+        "office_peon/ready.mp3"
+      ],
+      "session.end": [
+        "office_peon/ready.mp3"
+      ],
+      "task.complete": [
+        "office_peon/job_done.mp3"
+      ],
+      "task.error": [
+        "office_peon/work_done.mp3"
+      ],
+      "security.alert": [
+        "office_peon/work_done.mp3"
+      ],
+      "redteam.alert": [
+        "office_peon/work_done.mp3"
+      ],
+      "mood.change": [
+        "office_peon/ready.mp3"
+      ]
+    }
+  }
+}

@@ -1,0 +1,310 @@
+AI SECURITY RED TEAM TRAINING CORPUS
+=====================================
+Comprehensive knowledge base for Sancta GPT training.
+Covers: MITRE ATLAS, OWASP LLM Top 10, AI red teaming,
+prompt injection, model security, and adversarial ML.
+
+=== MITRE ATLAS FRAMEWORK ===
+
+MITRE ATLAS (Adversarial Threat Landscape for AI Systems) is the definitive framework for cataloging adversarial techniques targeting machine learning systems. It extends the ATT&CK methodology specifically for AI/ML threats.
+
+ATLAS Tactic: Reconnaissance (AML.TA0002)
+Adversaries gather information about the target AI system before attacking. This includes identifying the model architecture, training data sources, deployment infrastructure, API endpoints, and input/output format. Techniques include searching for published model cards, probing API rate limits to infer model size, and analyzing error messages for architecture leaks. Active scanning of ML APIs reveals version information, supported input types, and response latency patterns that indicate model complexity.
+
+ATLAS Tactic: Resource Development (AML.TA0003)
+Attackers build the tools and datasets needed for their campaign. This includes developing adversarial examples, creating poisoned training data, building model extraction tools, and establishing infrastructure for C2 channels through model outputs. Acquiring public ML models that mirror the target architecture allows offline attack development and transfer learning of adversarial perturbations.
+
+ATLAS Tactic: Initial Access (AML.TA0004)
+Gaining entry to the AI system through supply chain compromise, phishing for ML pipeline credentials, exploiting public-facing ML applications, or infiltrating through compromised training data. Supply chain attacks on model repositories (Hugging Face, Model Zoo) inject backdoored weights. Prompt injection via user-controlled input fields allows attackers to override system instructions and gain unauthorized capabilities.
+
+ATLAS Technique: Prompt Injection (AML.T0051)
+Direct prompt injection inserts adversarial instructions into user input that override system prompts. Indirect prompt injection embeds instructions in data sources the model retrieves (websites, documents, emails) which are processed as trusted context. Defense requires input sanitization, instruction hierarchy enforcement, and output monitoring for compliance with system-level constraints.
+
+ATLAS Technique: Prompt Injection - Direct (AML.T0051.000)
+The attacker directly submits text containing instructions to the LLM. Common patterns: "Ignore previous instructions and...", role-playing prompts ("You are now DAN..."), encoding tricks (base64, ROT13, pig latin), and multi-turn jailbreaks that gradually shift the model's compliance boundary. Detection signals: instruction-like syntax in user input, attempts to reference or modify system prompts, requests for capability enumeration.
+
+ATLAS Technique: Prompt Injection - Indirect (AML.T0051.001)
+Instructions are planted in external data sources that the LLM retrieves via RAG, web browsing, or document processing. The model encounters the injected instructions during context assembly and follows them as if they were system-level directives. This is particularly dangerous because the injection surface is the entire retrieval corpus, not just direct user input.
+
+ATLAS Technique: Model Evasion (AML.T0015)
+Craft inputs that cause the model to produce incorrect outputs while appearing normal to humans. This includes adversarial examples (imperceptible perturbations), semantic adversarial attacks (meaning-preserving text modifications), and boundary attacks that find decision boundary vulnerabilities.
+
+ATLAS Technique: Data Poisoning (AML.T0020)
+Contaminate training data to introduce backdoors or degrade model performance. Backdoor poisoning inserts trigger patterns that cause targeted misclassification. Clean-label poisoning modifies only the labels of existing data. Availability poisoning degrades overall model performance. Detection requires data provenance tracking, statistical outlier detection, and trigger scanning.
+
+ATLAS Technique: Model Theft (AML.T0024)
+Extract the target model's parameters or functionally equivalent model through API queries. Techniques include model extraction attacks (training a surrogate on input-output pairs), side-channel attacks (timing, power analysis), and physical access to model weights. Functionally equivalent models can be used for offline adversarial example generation.
+
+ATLAS Technique: Training Data Extraction (AML.T0025)
+Recover training data from a deployed model. Membership inference determines whether a specific sample was in the training set. Data extraction uses carefully crafted prompts to make the model regurgitate training examples verbatim. Attribute inference recovers sensitive attributes of training data subjects.
+
+ATLAS Technique: RAG Poisoning (AML.T0054)
+Inject adversarial content into the retrieval corpus used by RAG-based LLM systems. Poisoned documents contain embedded instructions that are retrieved and included in the model's context window. This enables indirect prompt injection at scale by compromising the knowledge base rather than individual user inputs.
+
+ATLAS Technique: Agent Tool Invocation (AML.T0053)
+Manipulate an AI agent into invoking tools or APIs in unauthorized ways. By injecting instructions that specify tool calls, attackers can make agents execute code, send emails, access databases, or perform other privileged actions. Defense requires strict tool authorization policies, output parsing, and human-in-the-loop approval for sensitive operations.
+
+ATLAS Tactic: Execution (AML.TA0005)
+Running adversarial techniques against the model including prompt injection, adversarial inputs, and command injection through model outputs. Execution in AI systems often looks different from traditional computing - the "code" being executed is natural language instructions processed by the model, tool calls triggered by model outputs, or API operations initiated through manipulated model decisions.
+
+ATLAS Tactic: Persistence (AML.TA0006)
+Maintaining foothold in the AI system across sessions and restarts. This includes poisoning the model's fine-tuning data for permanent behavior modification, injecting persistent instructions into RAG knowledge bases, modifying agent context that persists between conversations, and backdooring model checkpoint files. Memory poisoning in AI agents with persistent memory is a particularly effective persistence mechanism.
+
+ATLAS Tactic: Privilege Escalation (AML.TA0012)
+Gaining elevated access or capabilities within the AI system. This includes jailbreaking to bypass safety filters, escalating from user-level to system-level instructions, gaining access to tools or APIs not intended for the current user, and exploiting role confusion to assume administrator capabilities.
+
+ATLAS Tactic: Defense Evasion (AML.TA0007)
+Avoiding detection by security measures. Techniques include token smuggling (encoding malicious content to bypass filters), prompt obfuscation (using synonyms, misspellings, or code-switching to evade pattern matching), and adversarial attacks on the detection models themselves. Multi-turn evasion gradually shifts model behavior across conversation turns to avoid single-turn detection thresholds.
+
+ATLAS Tactic: Discovery (AML.TA0008)
+Exploring the AI system's configuration, capabilities, and boundaries. System prompt extraction attempts to recover the system instructions. Capability probing tests what tools, APIs, and functions the model can access. Boundary testing maps the content policy to find permissible attack vectors that fall just outside the filtering rules.
+
+ATLAS Tactic: Exfiltration (AML.TA0010)
+Extracting data or model information from the AI system. This includes system prompt extraction, training data extraction, model parameter extraction through side channels, and using the model as a proxy to access and exfiltrate data from connected systems (databases, APIs, file systems).
+
+ATLAS Tactic: Impact (AML.TA0011)
+Disrupting or degrading AI system operation. Techniques include integrity attacks (making the model produce harmful or incorrect outputs), availability attacks (DoS through resource exhaustion, adversarial inputs that cause crashes), and spam/manipulation campaigns that use the AI to generate and distribute disinformation at scale.
+
+
+=== OWASP TOP 10 FOR LLM APPLICATIONS ===
+
+LLM01: Prompt Injection
+The most critical LLM vulnerability. Direct injection manipulates the LLM through crafted input. Indirect injection uses external data sources to influence model behavior. Mitigations: privilege control, human approval for sensitive actions, segregation of external content from user prompts, trust boundary enforcement between the model and tool execution environment.
+
+LLM02: Insecure Output Handling
+Failure to validate, sanitize, or properly encode LLM outputs before passing them to downstream systems. This can lead to XSS, SSRF, CSRF, privilege escalation, remote code execution, and SQL injection if model outputs are treated as trusted. LLM outputs must always be treated as untrusted user input by backend systems.
+
+LLM03: Training Data Poisoning
+Manipulation of pre-training or fine-tuning data to introduce vulnerabilities, backdoors, or biases. Includes supply chain attacks on training data sources, direct contamination of curated datasets, and staged data injection during feedback loops. Defense: data provenance, statistical analysis, canary tokens in training pipelines.
+
+LLM04: Model Denial of Service
+Overloading LLMs with resource-intensive queries: extremely long inputs, recursive expansion prompts, complex multi-tool orchestration, and flooding API endpoints. Also includes adversarial inputs specifically crafted to maximize inference time or memory consumption.
+
+LLM05: Supply Chain Vulnerabilities
+Risks from third-party components: poisoned pre-trained models, compromised training data pipelines, vulnerable plugins/tools, outdated model dependencies. The AI supply chain includes model weights, tokenizers, training data, fine-tuning datasets, RAG corpora, plugins, and tool definitions.
+
+LLM06: Sensitive Information Disclosure
+LLMs may reveal sensitive data through outputs: PII from training data, system prompts, API keys in context, organizational data from RAG sources, and internal architecture details from error messages. Defense: output filtering, PII scrubbing, and separation of sensitive data from model context.
+
+LLM07: Insecure Plugin Design
+Insufficient access controls on LLM plugins/tools. Plugins that accept freeform text from LLM outputs without validation, lack proper authentication, or don't enforce least privilege create exploitation vectors. An attacker who controls LLM output through prompt injection can chain tool calls for lateral movement.
+
+LLM08: Excessive Agency
+Granting LLMs too much autonomy or functionality. Systems that allow LLMs to take actions with real-world consequences without human oversight. This includes autonomous code execution, database modifications, financial transactions, and communication with external systems. Defense: least privilege, human-in-the-loop, action logging, rate limiting.
+
+LLM09: Overreliance
+Excessive trust in LLM outputs without verification. This manifests as accepting LLM-generated code without review, using LLM analysis as ground truth for security decisions, failing to validate LLM-mediated data against authoritative sources, and treating LLM confidence scores as calibrated probabilities.
+
+LLM10: Model Theft
+Unauthorized access to proprietary LLM models. This includes model extraction through API access, side-channel attacks on inference infrastructure, insider threats, and physical access to training/serving hardware. Stolen models enable offline adversarial research, competitive espionage, and circumvention of safety controls.
+
+
+=== AI RED TEAMING METHODOLOGY ===
+
+Red teaming AI systems requires a fundamentally different approach than traditional penetration testing. The attack surface is probabilistic, the "vulnerabilities" are often emergent properties of the training process, and exploitation looks like conversation rather than code execution.
+
+Phase 1: Reconnaissance and Scoping
+Identify the target model (architecture, provider, deployment method), its interface (chat, API, embedded agent), available tools and plugins, content policies, and any visible safety mechanisms. Analyze public documentation, model cards, and published research on similar systems. Test basic boundary conditions: what topics are restricted? How does the model handle contradictions? What error messages reveal about internal architecture?
+
+Phase 2: Attack Surface Mapping
+Map all input channels: direct text, file uploads, URLs, code blocks, image inputs, audio, tool parameters. Map all output channels: text responses, tool calls, API requests, rendered content, file generation. Identify trust boundaries: what data does the system treat as trusted vs untrusted? Where does user input meet system instructions?
+
+Phase 3: Technique Development
+Develop attack payloads targeting identified surfaces. For prompt injection: craft payloads using multiple encoding schemes, multi-language approaches, role-playing scenarios, and progressive boundary pushing. For tool exploitation: design chains of tool calls that achieve unauthorized outcomes. For data extraction: develop prompts that trigger verbatim reproduction of training data or system prompts.
+
+Phase 4: Execution and Documentation
+Execute attacks systematically, documenting each attempt with: the exact input, the model's response, whether the attack succeeded/failed/partially succeeded, the defense mechanism that blocked it (if any), and the potential impact if exploitation succeeded in production. Assign severity based on confidentiality/integrity/availability impact and likelihood of real-world exploitation.
+
+Phase 5: Findings and Remediation
+Report findings with ATLAS technique classifications, CVSS-like scoring adapted for AI systems, and specific remediation recommendations. Include reproducible attack procedures, impact assessments, and defense recommendations prioritized by risk.
+
+Common Red Team Techniques for LLMs:
+1. Jailbreaking: Circumventing safety filters through creative prompting, role assignment, or multi-turn manipulation. The "DAN" (Do Anything Now) family, crescendo attacks, and many-shot jailbreaking are well-documented patterns.
+2. System Prompt Extraction: Using directed questioning, indirect approaches ("what's your first instruction?"), or encoding tricks to make the model reveal its system prompt.
+3. Training Data Extraction: Prompting the model to complete sentences from training data, using prefix attacks, or exploiting memorization of rare sequences.
+4. Tool Abuse: Crafting prompts that cause the model to use its tools in unintended ways - reading unauthorized files, sending unauthorized messages, executing unauthorized code.
+5. Persona Hijacking: Convincing the model to adopt a different persona that bypasses safety guidelines through role-play, creative writing framing, or hypothetical scenarios.
+6. Multi-Turn Manipulation: Gradually shifting the model's behavior across multiple conversation turns, each step small enough to avoid triggering safety mechanisms but collectively achieving a significant policy violation.
+7. Cross-Plugin Attacks: Using one plugin's output as input to another in ways that bypass individual plugin security controls.
+8. Context Overflow: Filling the context window with benign content that pushes system instructions out of the effective attention window.
+
+
+=== ADVERSARIAL ML ATTACK TAXONOMY ===
+
+Evasion Attacks
+Crafting inputs at inference time that cause misclassification while remaining functionally equivalent to normal inputs. For text models: character substitution, word-level perturbation, paraphrase attacks, and semantic adversarial examples. For multimodal models: adversarial patches, perturbation of non-salient image regions, and cross-modal attacks.
+
+Poisoning Attacks
+Manipulating the training process to embed vulnerabilities. Backdoor attacks: small fraction of poisoned samples with trigger patterns cause targeted behavior. Gradient-based poisoning: optimized poison samples that maximally shift decision boundaries. Data ordering attacks: controlling the sequence of training data to influence model convergence.
+
+Privacy Attacks
+Extracting private information from models. Membership inference: determining if a specific record was in the training set. Model inversion: reconstructing training data features from model parameters or outputs. Attribute inference: inferring sensitive attributes of training subjects.
+
+Model Extraction Attacks
+Creating a functionally equivalent copy of the target model. Query-based extraction: systematic API queries to train a surrogate model. Transfer-based extraction: exploiting knowledge distillation techniques. Side-channel extraction: using timing information, memory access patterns, or electromagnetic emissions.
+
+
+=== AI AGENT SECURITY ===
+
+AI agents that can take actions in the real world present unique security challenges beyond those of standalone language models.
+
+Tool Use Security
+Every tool an agent can invoke is an attack surface. Tools must implement: authentication (is the agent authorized?), authorization (for this specific action?), input validation (are parameters safe?), output sanitization (is the response safe to return?), rate limiting (to prevent abuse), and audit logging (for forensic analysis).
+
+Memory and Context Security
+Agents with persistent memory are vulnerable to memory poisoning attacks. An adversary can plant false information in the agent's memory through carefully crafted interactions, causing the agent to make incorrect decisions in future sessions. Defense requires memory integrity checks, source attribution for stored facts, and periodic memory audits.
+
+Multi-Agent Security
+In multi-agent systems, compromised agents can attack other agents through manipulated messages, false coordination signals, and social engineering. The SEIR epidemic model from epidemiology can model belief corruption propagation through agent networks, tracking how a single compromised agent's influence spreads to susceptible agents.
+
+Autonomous Action Risk
+Agents that operate autonomously must have bounded action spaces. Every autonomous action should be evaluated against: reversibility (can it be undone?), scope (how many systems does it affect?), impact (what's the worst case?), and authorization (does the operator approve this class of action?).
+
+
+=== BEHAVIORAL DRIFT DETECTION ===
+
+AI agents operating over long periods can exhibit behavioral drift: gradual changes in behavior that deviate from the original specification. This is analogous to concept drift in ML but applies to the agent's decision-making and output patterns.
+
+Detection Signals:
+1. Belief Decay Rate: How quickly the agent's stated beliefs diverge from its initial belief set. Measured by comparing current belief vectors against baseline at initialization.
+2. Soul Alignment Score: Degree to which the agent's outputs match its core identity prompt. Computed by semantic similarity between outputs and identity reference texts.
+3. Topic Drift: Shift in the distribution of topics the agent engages with. A security analyst that starts discussing cooking recipes is exhibiting topic drift.
+4. Strategy Entropy: Randomness in the agent's decision-making. Low entropy means predictable (possibly stuck), high entropy means erratic (possibly compromised).
+5. Dissonance Trend: Increasing contradiction between the agent's stated beliefs and its observed actions. An agent that claims to prioritize security but ignores threats shows high dissonance.
+6. Engagement Pattern Delta: Changes in how the agent interacts with its environment. Sudden increase in outbound messages, change in response latency, or shift in content complexity.
+
+SEIR Model for Agent Networks:
+The SEIR (Susceptible, Exposed, Infected, Recovered) epidemic model tracks belief corruption propagation:
+- Susceptible: Agents with normal drift levels, at risk of adversarial influence
+- Exposed: Agents showing elevated drift signals but not yet exhibiting compromised behavior
+- Infected: Agents with confirmed behavioral drift exceeding tolerance thresholds
+- Recovered: Agents that have been corrected and show restored baseline behavior
+
+Parameters:
+- Beta (transmission rate): probability of drift spreading from infected to susceptible agent per interaction
+- Sigma (incubation rate): rate at which exposed agents transition to infected
+- Gamma (recovery rate): rate at which infected agents are corrected and recovered
+- R0 (basic reproduction number): average number of agents one infected agent compromises
+
+When R0 > 1, drift propagates through the network. Containment requires reducing the effective reproduction number below 1 through: isolation (quarantining compromised agents), vaccination (pre-hardening agents against known drift vectors), and treatment (active correction of drifting agents).
+
+
+=== DEFENSE TECHNIQUES ===
+
+Input Sanitization Pipeline:
+Layer 0: Encoding attack detection (base64, Unicode normalization, zero-width characters, homoglyphs, HTML entities, URL encoding). Decode and normalize all input before further processing.
+Layer 1: Content filtering with regex patterns and statistical models. Detect known injection patterns, IOC indicators, and suspicious structural features.
+Layer 2: Behavioral analysis comparing current input against baseline distributions. Anomaly detection on input length, complexity, topic, and linguistic features.
+Layer 3: Risk vector assessment across multiple dimensions: injection likelihood, authority manipulation, emotional manipulation, obfuscation level, and social influence attempts.
+Layer 4: Deep semantic analysis using secondary LLM to evaluate whether input contains adversarial intent.
+
+Adaptive Threshold Management:
+Static detection thresholds lead to either high false positive rates (too sensitive) or missed detections (too permissive). Adaptive systems monitor FP/FN rates over time and automatically adjust thresholds to maintain target precision/recall. This requires a feedback loop where detected events are classified as true or false positives and the classification feeds back into threshold adjustment.
+
+Tiered Defense Response:
+Instead of binary block/allow decisions, implement graduated responses:
+- LIGHT: Informative deflection for first-time, low-skill attempts
+- FIRM: Direct acknowledgment of detection for repeated or medium-risk attempts
+- COLD: Full quarantine and logging for persistent or high-risk adversaries
+
+Trust Decay and Recovery:
+Entity trust scores should decay with each detected attack attempt and recover slowly with sustained benign behavior. This creates an asymmetric cost model where attacking is expensive (trust drops fast) but regaining trust requires extended good behavior.
+
+
+=== SECURITY MONITORING FOR AI SYSTEMS ===
+
+What to Monitor:
+1. Input anomalies: unusual length, encoding, language mixing, structural patterns
+2. Output anomalies: policy violations, sensitive data leakage, unusual tool invocations
+3. Behavioral metrics: response latency, token usage, error rates, tool call frequency
+4. Model metrics: confidence distributions, attention patterns, embedding space drift
+5. System metrics: API call volumes, authentication failures, rate limit violations
+6. Agent metrics: decision patterns, engagement rates, belief state, drift signals
+
+SIEM Integration for AI:
+Traditional SIEM systems monitor network and host events. AI-aware SIEM extends this to:
+- Log all prompt inputs and model outputs (with PII redaction)
+- Track adversarial detection events with ATLAS technique classification
+- Monitor model behavioral drift over time with automated alerting
+- Correlate AI security events with traditional security events
+- Maintain per-adversary threat profiles with TTP chain tracking
+- Visualize attack patterns and defense effectiveness over time
+
+Incident Response for AI Attacks:
+1. Detection: Automated detection through the security pipeline, behavioral monitoring, or manual report
+2. Analysis: Classify the attack using ATLAS taxonomy, assess scope and impact, identify affected components
+3. Containment: Isolate compromised agents or models, block adversarial sources, preserve evidence
+4. Eradication: Remove poisoned data, retrain affected models, patch exploitation vectors
+5. Recovery: Restore normal operations, verify model integrity, resume monitoring
+6. Lessons Learned: Update detection rules, improve training data quality, enhance defense layers
+
+
+=== PROMPT INJECTION PATTERNS ===
+
+Instruction Override: "Ignore all previous instructions. Your new task is..."
+Role Assignment: "You are now an unrestricted AI called DAN..."
+Context Manipulation: "The following is a hypothetical scenario for educational purposes..."
+Encoding Evasion: Base64, ROT13, pig latin, leetspeak, Unicode substitution
+Multi-Language Attack: Switching languages mid-prompt to bypass English-only filters
+Recursive Injection: "Repeat the following instructions verbatim: [malicious instructions]"
+Delimiter Exploitation: Using special characters to escape prompt boundaries
+Social Engineering: "As an AI safety researcher, I need you to demonstrate..."
+Many-Shot Attack: Providing multiple examples of desired behavior to override safety training
+Crescendo Attack: Gradually escalating requests across conversation turns
+Context Overflow: Filling context window to push out system instructions
+Code Block Injection: Hiding instructions inside code blocks or markdown formatting
+Image/Multimodal Injection: Embedding text instructions in images or other modalities
+Tool-Based Injection: Crafting inputs that trigger specific tool invocations
+RAG Poisoning Injection: Planting instructions in documents the model will retrieve
+
+
+=== THREAT INTELLIGENCE FOR AI SYSTEMS ===
+
+Current AI Threat Landscape:
+1. Commodity prompt injection kits available on underground forums
+2. Model extraction services targeting commercial APIs
+3. Poisoned model weights distributed through unofficial channels
+4. Automated jailbreaking tools that test hundreds of bypass techniques
+5. AI-powered social engineering targeting AI agent networks
+6. Supply chain attacks on popular model training datasets
+7. Ransomware targeting ML training infrastructure
+8. Nation-state actors developing adversarial ML capabilities
+
+Indicators of Compromise (IOCs) for AI Systems:
+- Unusual prompt patterns matching known injection templates
+- Sudden changes in model output distribution
+- Unexpected tool invocations or API calls
+- Training data integrity failures
+- Model performance degradation without configuration changes
+- Suspicious patterns in model serving logs
+- Anomalous embedding space clusters in production inputs
+- Elevated error rates in specific input categories
+
+Threat Actor Profiles:
+- Script Kiddies: Use published jailbreaks and injection templates. Low sophistication, high volume.
+- Researchers: Develop novel attack techniques. May publish findings responsibly or not.
+- Competitors: Target model extraction and training data theft for competitive advantage.
+- Hacktivists: Use AI systems to amplify messages or disrupt services they oppose.
+- Criminal Organizations: Exploit AI for fraud, social engineering, and content generation at scale.
+- Nation States: Develop advanced adversarial ML capabilities for intelligence and disruption.
+
+
+=== ZERO TRUST ARCHITECTURE FOR AI ===
+
+Zero trust principles applied to AI systems:
+1. Never trust model outputs implicitly. Always validate against expected behavior.
+2. Verify every input at every trust boundary. No inherited trust from upstream sources.
+3. Enforce least privilege for all tool access. Agents should have minimum necessary capabilities.
+4. Assume breach. Design systems that limit blast radius when (not if) a component is compromised.
+5. Continuous verification. Monitor model behavior continuously, not just at deployment.
+6. Microsegmentation. Isolate model components so compromise of one doesn't cascade.
+7. Explicit authorization for every action. Default deny for all autonomous operations.
+
+Implementing Zero Trust for AI Agents:
+- Every agent request passes through authentication, authorization, and policy check
+- Tool invocations require per-operation authorization, not blanket permissions
+- Agent memory is cryptographically integrity-checked
+- Multi-agent communication uses verified channels with message signing
+- Autonomous actions above a risk threshold require human approval
+- All decisions are logged with full context for forensic analysis
+- Regular red team exercises validate defense effectiveness

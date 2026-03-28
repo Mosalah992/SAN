@@ -1,0 +1,27 @@
+# Sancta — Docker Compose for Ubuntu VM
+#
+# Usage:
+#   docker compose up -d
+#   Open http://<vm-ip>:8787
+#
+# First run: create .env with MOLTBOOK_API_KEY (or register via dashboard)
+
+services:
+  sancta:
+    build: .
+    container_name: sancta-siem
+    ports:
+      - "8787:8787"
+    volumes:
+      # Bind-mount project dir so agent_state, logs, data persist on host
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      # Linux/Docker: safe mode off for full features
+      - SIEM_WS_SAFE_MODE=false
+      - SIEM_PSUTIL_DISABLE=false
+      - SIEM_METRICS_SAFE_MODE=false
+      # Allow CORS when accessing from host via VM IP
+      - SIEM_CORS_ORIGIN_REGEX=https?://[^/]+:8787
+    restart: unless-stopped

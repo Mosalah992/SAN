@@ -1,0 +1,10 @@
+# GPT-tab routing thresholds (see docs/TRUST_ROUTING_ROADMAP.md)
+# Loaded by backend/sancta_router.py — YAML preferred; trust_router.json still supported.
+
+confidence_min: 0.22
+knowledge_margin: 0.08
+gate_threshold: 0.35
+axis_weights:
+  requires_external_facts: 1.0
+  requires_multi_hop_reasoning: 1.0
+  domain_entity_signal: 1.0

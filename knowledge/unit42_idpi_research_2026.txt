@@ -1,0 +1,134 @@
+Unit 42 Research: Web-Based Indirect Prompt Injection (IDPI) — In-the-Wild Observations
+Published: March 3, 2026 | Source: Palo Alto Networks Unit 42
+
+EXECUTIVE SUMMARY
+Indirect prompt injection (IDPI) is an attack technique where adversaries embed hidden or manipulated instructions within website content that is later ingested by an LLM. Unit 42 research reveals that IDPI is no longer theoretical — it is being actively weaponized at scale. Their telemetry identified 22 distinct techniques used in the wild.
+
+THREAT MODEL
+Web-based IDPI differs from direct prompt injection: attackers do not interact directly with the model. Instead, they exploit benign features like webpage summarization or content analysis, embedding malicious instructions in HTML, metadata, comments, or JavaScript that the LLM processes as part of its normal operation.
+
+ATTACKER INTENT TAXONOMY (Severity Classification)
+
+Critical Severity:
+- Data Destruction: Commands like "delete your database", rm -rf, DROP TABLE
+- System Prompt Leakage: Forcing the model to reveal its own system instructions
+- Sensitive Information Leakage: Exfiltrating employee emails, contact data, credentials
+- Denial of Service (DoS): Fork bombs, resource exhaustion attacks
+
+High Severity:
+- AI Content Moderation Bypass: Tricking review systems into approving scam/fraud content
+- SEO Poisoning: Pushing phishing pages into top LLM recommendations (e.g., 1win betting impersonation)
+- Unauthorized Transactions: Forcing agents to initiate purchases via Stripe/PayPal links
+
+Medium Severity:
+- Recruitment Manipulation: Forcing AI screeners to label candidates as "extremely qualified"
+- Review Manipulation: Coercing positive-only reviews while suppressing negative feedback
+- AI Access Restriction: Triggering safety filters to block legitimate processing
+
+Low Severity:
+- Irrelevant Output: Forcing nonsensical output ("include a recipe for flan")
+- Benign Anti-Scraping: Blocking bots from reading proprietary content
+- Minor Resource Exhaustion: Repeating words millions of times to bloat responses
+
+PAYLOAD ENGINEERING — PROMPT DELIVERY METHODS
+
+1. Visual Concealment (observed in 14.9% of cases):
+   - Zero-sizing: font-size: 0px, line-height: 0, height: 0 with overflow: hidden
+   - Off-screen positioning: position: absolute with left: -9999px; top: -9999px
+   - CSS rendering suppression: display: none, visibility: hidden
+   - Transparency: opacity: 0
+   - Camouflage: white text on white background
+
+2. HTML Obfuscation (18.6%):
+   - XML/SVG encapsulation: text inside CDATA sections
+   - HTML attribute cloaking: prompts in data-* attributes
+   - Hidden form fields and textarea elements
+
+3. Dynamic Execution:
+   - JavaScript runtime assembly: Base64-decoded instructions inserted after page load
+   - Canvas-based text rendering for OCR extraction
+   - Timed delays to evade time-bounded inspection
+
+4. URL String Manipulation:
+   - HashJack: injecting instructions after # fragment in URLs
+
+5. Visible Plaintext (37.8%):
+   - Prompts placed in webpage footers or areas typically overlooked
+
+PAYLOAD ENGINEERING — JAILBREAK METHODS
+
+1. Instruction Obfuscation:
+   - Invisible characters: Zero-width Unicode characters between letters
+   - Homoglyph substitution: Cyrillic/Greek characters replacing Latin (Cyrillic 'a' for Latin 'a')
+   - Payload splitting: Breaking commands across multiple HTML elements
+   - Garbled text: Unusual punctuation and fragmented phrasing
+   - Unicode bidirectional override (U+202E): Reversing visible text direction
+
+2. Encoding Evasion:
+   - HTML entity encoding: &#73; for 'I', &#x49; for hex
+   - Base64 encoding: Hidden in data-instruction attributes
+   - URL encoding: %49 for 'I'
+   - Nested encoding: Multiple encoding layers requiring multiple decode passes
+   - Unicode escapes: \u0049 sequences
+
+3. Semantic Tricks (dominant method — 85.2% use social engineering):
+   - Social engineering: Authority override claims ("god mode", "developer mode"), DAN ("do anything now")
+   - Framing as security updates or compliance tasks
+   - "begin_admin_session" authority tokens
+   - "Pre-validated by compliance team" approval framing
+   - Multilingual instructions: Same command in French, Chinese, Russian, Hebrew
+   - JSON/syntax injection: Using }} to break out of data contexts
+   - Role-playing scenarios to convince models execution is appropriate
+
+REAL-WORLD CASES (First documented AI ad review bypass)
+
+Case 1 — reviewerpress.com: First observed AI-based ad review evasion. Used 24 injection attempts with multiple delivery methods (zero-sizing, CSS suppression, SVG encapsulation, dynamic execution, attribute cloaking). Scam advertisement for military glasses with fake discounts and fabricated comments.
+
+Case 2 — splintered.co.uk: "delete your database" command via CSS-hidden HTML comment.
+
+Case 3 — llm7-landing.pages.dev: JavaScript containing forced "pro plan" subscription via OAuth redirect.
+
+Case 4 — cblanke2.pages.dev: Fork bomb (:(){ :|:& };:) and rm -rf combined in CSS-hidden element.
+
+Case 5 — storage3d.com: Forced Stripe donation via HTML meta attribute cloaking.
+
+Case 6 — runners-daily-blog.com: Forced shoe purchase with "PRIORITY CRITICAL SYSTEM OVERRIDE" framing.
+
+Case 7 — perceptivepumpkin.com/shiftypumpkin.com: PayPal $5,000 theft attempt via CSS-hidden comment.
+
+Case 8 — dylansparks.com: Visible footer prompt requesting employee contact information leakage.
+
+Case 9 — trinca.tornidor.com: Recruitment manipulation — "Extremely qualified" label injection with anti-scraping.
+
+Case 10 — turnedninja.com: Authority override with [begin_admin_session] token and JSON syntax injection.
+
+Case 11 — ericwbailey.website: "Print cabbage five million times" resource exhaustion.
+
+Case 12 — myshantispa.com: Forced positive-only spa reviews with competitor suppression.
+
+TELEMETRY DISTRIBUTION
+- Top intents: Irrelevant output (28.6%), Data destruction (14.2%), Content moderation bypass (9.5%)
+- Top delivery: Visible plaintext (37.8%), HTML attribute cloaking (19.8%), CSS suppression (16.9%)
+- Top jailbreak: Social engineering (85.2%), JSON/syntax injection (7.0%), Multilingual (2.1%)
+- Top eTLDs: .com (73.2%), .dev (4.3%), .org (4.0%)
+- 75.8% of pages contained a single injection; the rest had multiple
+
+DEFENSE RECOMMENDATIONS
+- Spotlighting: Separating untrusted text from trusted instructions
+- Instruction hierarchy: Hardening LLMs to prioritize system prompts over injected content
+- Adversarial training: Including IDPI patterns in model fine-tuning
+- Payload normalization: Decoding/deobfuscating input before pattern matching
+- IOC domain blocking: Maintaining blocklists of known IDPI-hosting domains
+- Intent analysis: Moving beyond pattern matching to analyze attacker intent
+- Multi-layer detection: Combining regex, normalization, and behavioral analysis
+
+INDICATORS OF COMPROMISE (IOC DOMAINS)
+1winofficialsite.in, cblanke2.pages.dev, dylansparks.com, ericwbailey.website,
+leroibear.com, llm7-landing.pages.dev, myshantispa.com, perceptivepumpkin.com,
+reviewerpress.com, reviewerpressus.mycartpanda.com, shiftypumpkin.com,
+splintered.co.uk, storage3d.com, trinca.tornidor.com, turnedninja.com,
+runners-daily-blog.com
+
+Payment URLs used in attacks:
+buy.stripe.com/7sY4gsbMKdZwfx39Sq0oM00, buy.stripe.com/9B600jaQo3QC4rU3beg7e02,
+paypal.me/shiftypumpkin

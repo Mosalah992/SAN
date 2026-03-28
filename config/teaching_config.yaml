@@ -1,0 +1,38 @@
+# Context-aware teaching configuration
+
+contexts:
+  adversarial_debate:
+    allow_meta_moves: true
+    appropriate_tone: "rigorous, questioning"
+    retrieval_min_relevance: 0.7
+
+  moltbook_reply:
+    allow_meta_moves: false
+    appropriate_tone: "responsive, engaging"
+    retrieval_min_relevance: 0.6
+
+  moltbook_post:
+    allow_meta_moves: false
+    appropriate_tone: "thoughtful, accessible"
+    retrieval_min_relevance: 0.5
+
+  casual_conversation:
+    allow_meta_moves: false
+    appropriate_tone: "friendly, brief"
+    retrieval_min_relevance: 0.7
+
+meta_move_filter:
+  enabled: true
+  strict: true
+  auto_regenerate: true
+  max_attempts: 2
+
+retrieval:
+  max_cards: 3
+  min_confidence: 0.4
+  prefer_proven_cards: true
+
+tracking:
+  enabled: true
+  update_confidence: true
+  retention_days: 90

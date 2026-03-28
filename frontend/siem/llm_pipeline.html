@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Pipeline — Sancta Mapping</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10;
+    --surface: #0d1117;
+    --border: #1e2a38;
+    --accent1: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #a8ff78;
+    --accent4: #f7c948;
+    --accent5: #c77dff;
+    --text: #cdd9e5;
+    --muted: #546678;
+    --line: #1e3a4a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,229,255,0.015) 2px,
+      rgba(0,229,255,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  header {
+    padding: 3rem 4rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    gap: 2rem;
+  }
+
+  .title-block h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    letter-spacing: 0.08em;
+    color: var(--accent1);
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(0,229,255,0.3);
+  }
+
+  .title-block p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+  }
+
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .tree-container {
+    padding: 3rem 2rem 4rem;
+    overflow-x: auto;
+  }
+
+  .tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    min-width: 900px;
+  }
+
+  /* ── Node styles ── */
+  .node {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+
+  .node:hover { transform: translateY(-2px); }
+
+  .node-box {
+    border: 1px solid;
+    padding: 0.65rem 1.2rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    position: relative;
+    transition: box-shadow 0.3s ease, background 0.3s ease;
+    min-width: 160px;
+    text-align: center;
+  }
+
+  .node-box:hover {
+    box-shadow: 0 0 20px currentColor;
+  }
+
+  .node-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    display: block;
+    margin-bottom: 0.2rem;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .node-title {
+    font-weight: 500;
+    font-size: 0.78rem;
+  }
+
+  /* Phase colors */
+  .phase-0 .node-box { border-color: var(--accent4); color: var(--accent4); background: rgba(247,201,72,0.05); }
+  .phase-1 .node-box { border-color: var(--accent2); color: var(--accent2); background: rgba(255,107,53,0.05); }
+  .phase-2 .node-box { border-color: var(--accent1); color: var(--accent1); background: rgba(0,229,255,0.05); }
+  .phase-3 .node-box { border-color: var(--accent3); color: var(--accent3); background: rgba(168,255,120,0.05); }
+  .phase-4 .node-box { border-color: var(--accent5); color: var(--accent5); background: rgba(199,125,255,0.05); }
+  .phase-5 .node-box { border-color: #ff4d6d; color: #ff4d6d; background: rgba(255,77,109,0.05); }
+
+  /* ROOT node */
+  .root .node-box {
+    border-color: #fff;
+    color: #fff;
+    background: rgba(255,255,255,0.04);
+    font-size: 1rem;
+    padding: 1rem 2.5rem;
+    letter-spacing: 0.1em;
+    font-family: 'Bebas Neue', sans-serif;
+    box-shadow: 0 0 30px rgba(255,255,255,0.1);
+  }
+
+  /* ── Connector lines ── */
+  .connector-v {
+    width: 1px;
+    background: linear-gradient(to bottom, var(--line), var(--line));
+    position: relative;
+  }
+
+  .connector-v::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px; height: 6px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    transform: translateX(-50%) rotate(45deg);
+    transform-origin: center;
+  }
+
+  /* ── Row layout ── */
+  .row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    position: relative;
+    width: 100%;
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Horizontal bridge line drawn with CSS */
+  .h-line {
+    height: 1px;
+    background: var(--line);
+    align-self: flex-start;
+    margin-top: 0px;
+  }
+
+  /* ── Popup detail panel ── */
+  .detail-panel {
+    position: fixed;
+    top: 50%;
+    right: 2rem;
+    transform: translateY(-50%);
+    width: 320px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .detail-panel.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .detail-panel h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+
+  .detail-panel .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .detail-panel p {
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: var(--text);
+    opacity: 0.8;
+  }
+
+  .detail-panel ul {
+    margin-top: 0.75rem;
+    padding-left: 1rem;
+  }
+
+  .detail-panel ul li {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+    line-height: 1.5;
+  }
+
+  .detail-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+  }
+
+  /* ── SVG Tree Canvas ── */
+  #tree-svg {
+    width: 100%;
+    overflow: visible;
+    display: block;
+  }
+
+  /* pulse animation on root */
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 20px rgba(255,255,255,0.1); }
+    50%       { box-shadow: 0 0 40px rgba(255,255,255,0.25); }
+  }
+
+  .root .node-box { animation: pulse-border 3s ease-in-out infinite; }
+
+  /* data flow dots */
+  @keyframes flow-down {
+    0%   { top: 0%; opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  .flow-dot {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    animation: flow-down 2s linear infinite;
+    pointer-events: none;
+  }
+
+  /* entry animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .node { animation: fadeUp 0.5s ease both; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-block">
+    <h1>LLM TRAINING PIPELINE</h1>
+    <p>Architecture Tree — Sancta Mapping</p>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent4)"></div>Data Collection</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Preprocessing</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent1)"></div>Architecture</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent3)"></div>Pre-Training</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent5)"></div>Fine-Tuning</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff4d6d"></div>Deployment</div>
+  </div>
+</header>
+
+<div class="tree-container">
+  <svg id="tree-svg" viewBox="0 0 1100 1800" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M1,1 L7,4 L1,7 Z" fill="#1e3a4a"/>
+      </marker>
+      <marker id="arrow-y" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M1,1 L7,4 L1,7 Z" fill="var(--accent4)"/>
+      </marker>
+      <marker id="arrow-o" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M1,1 L7,4 L1,7 Z" fill="var(--accent2)"/>
+      </marker>
+      <marker id="arrow-c" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M1,1 L7,4 L1,7 Z" fill="var(--accent1)"/>
+      </marker>
+      <marker id="arrow-g" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M1,1 L7,4 L1,7 Z" fill="var(--accent3)"/>
+      </marker>
+      <marker id="arrow-p" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M1,1 L7,4 L1,7 Z" fill="var(--accent5)"/>
+      </marker>
+      <marker id="arrow-r" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M1,1 L7,4 L1,7 Z" fill="#ff4d6d"/>
+      </marker>
+      <filter id="glow-c">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- ══════════════════════════════════════════════
+         ROOT
+    ══════════════════════════════════════════════ -->
+    <!-- ROOT BOX -->
+    <rect x="400" y="20" width="300" height="52" rx="2" fill="rgba(255,255,255,0.03)" stroke="white" stroke-width="1"/>
+    <text x="550" y="40" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="22" fill="white" letter-spacing="4">LLM TRAINING PIPELINE</text>
+    <text x="550" y="58" text-anchor="middle" font-family="'DM Mono',monospace" font-size="9" fill="#546678" letter-spacing="2">CLICK ANY NODE — SEE SANCTA MAPPING</text>
+
+    <!-- Root → Phase 1 -->
+    <line x1="550" y1="72" x2="550" y2="105" stroke="#1e3a4a" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- ══════════════════════════════════════════════
+         PHASE 1 — DATA COLLECTION
+    ══════════════════════════════════════════════ -->
+    <rect x="400" y="108" width="300" height="46" rx="2" fill="rgba(247,201,72,0.05)" stroke="#f7c948" stroke-width="1"
+          class="clickable" data-id="data-collection" style="cursor:pointer"/>
+    <text x="550" y="125" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#f7c948" opacity="0.5" letter-spacing="2">PHASE 1</text>
+    <text x="550" y="143" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" fill="#f7c948" font-weight="500">DATA COLLECTION</text>
+
+    <!-- horizontal spread -->
+    <line x1="180" y1="154" x2="920" y2="154" stroke="#1e3a4a" stroke-width="1"/>
+    <!-- verticals down to children -->
+    <line x1="180" y1="154" x2="180" y2="188" stroke="#f7c948" stroke-width="1" marker-end="url(#arrow-y)"/>
+    <line x1="390" y1="154" x2="390" y2="188" stroke="#f7c948" stroke-width="1" marker-end="url(#arrow-y)"/>
+    <line x1="600" y1="154" x2="600" y2="188" stroke="#f7c948" stroke-width="1" marker-end="url(#arrow-y)"/>
+    <line x1="820" y1="154" x2="820" y2="188" stroke="#f7c948" stroke-width="1" marker-end="url(#arrow-y)"/>
+
+    <!-- Child nodes row 1 -->
+    <rect x="95" y="191" width="170" height="36" rx="2" fill="rgba(247,201,72,0.04)" stroke="#f7c948" stroke-width="0.7"
+          class="clickable" data-id="web-crawl" style="cursor:pointer"/>
+    <text x="180" y="207" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#f7c948" opacity="0.45" letter-spacing="1.5">SOURCE</text>
+    <text x="180" y="220" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#f7c948">Web Crawl</text>
+
+    <rect x="305" y="191" width="170" height="36" rx="2" fill="rgba(247,201,72,0.04)" stroke="#f7c948" stroke-width="0.7"
+          class="clickable" data-id="books" style="cursor:pointer"/>
+    <text x="390" y="207" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#f7c948" opacity="0.45" letter-spacing="1.5">SOURCE</text>
+    <text x="390" y="220" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#f7c948">Books / Papers</text>
+
+    <rect x="515" y="191" width="170" height="36" rx="2" fill="rgba(247,201,72,0.04)" stroke="#f7c948" stroke-width="0.7"
+          class="clickable" data-id="code" style="cursor:pointer"/>
+    <text x="600" y="207" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#f7c948" opacity="0.45" letter-spacing="1.5">SOURCE</text>
+    <text x="600" y="220" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#f7c948">Code Repos</text>
+
+    <rect x="735" y="191" width="170" height="36" rx="2" fill="rgba(247,201,72,0.04)" stroke="#f7c948" stroke-width="0.7"
+          class="clickable" data-id="curated" style="cursor:pointer"/>
+    <text x="820" y="207" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#f7c948" opacity="0.45" letter-spacing="1.5">SOURCE</text>
+    <text x="820" y="220" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#f7c948">Curated Datasets</text>
+
+    <!-- converge back to spine -->
+    <line x1="180" y1="227" x2="180" y2="258" stroke="#f7c948" stroke-width="0.7"/>
+    <line x1="390" y1="227" x2="390" y2="258" stroke="#f7c948" stroke-width="0.7"/>
+    <line x1="600" y1="227" x2="600" y2="258" stroke="#f7c948" stroke-width="0.7"/>
+    <line x1="820" y1="227" x2="820" y2="258" stroke="#f7c948" stroke-width="0.7"/>
+    <line x1="180" y1="258" x2="820" y2="258" stroke="#f7c948" stroke-width="0.7"/>
+    <line x1="550" y1="258" x2="550" y2="280" stroke="#1e3a4a" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- ══════════════════════════════════════════════
+         PHASE 2 — PREPROCESSING
+    ══════════════════════════════════════════════ -->
+    <rect x="400" y="283" width="300" height="46" rx="2" fill="rgba(255,107,53,0.05)" stroke="#ff6b35" stroke-width="1"
+          class="clickable" data-id="preprocessing" style="cursor:pointer"/>
+    <text x="550" y="300" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff6b35" opacity="0.5" letter-spacing="2">PHASE 2</text>
+    <text x="550" y="318" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" fill="#ff6b35" font-weight="500">PREPROCESSING</text>
+
+    <line x1="220" y1="329" x2="880" y2="329" stroke="#1e3a4a" stroke-width="1"/>
+    <line x1="220" y1="329" x2="220" y2="363" stroke="#ff6b35" stroke-width="1" marker-end="url(#arrow-o)"/>
+    <line x1="435" y1="329" x2="435" y2="363" stroke="#ff6b35" stroke-width="1" marker-end="url(#arrow-o)"/>
+    <line x1="665" y1="329" x2="665" y2="363" stroke="#ff6b35" stroke-width="1" marker-end="url(#arrow-o)"/>
+    <line x1="880" y1="329" x2="880" y2="363" stroke="#ff6b35" stroke-width="1" marker-end="url(#arrow-o)"/>
+
+    <rect x="135" y="366" width="170" height="36" rx="2" fill="rgba(255,107,53,0.04)" stroke="#ff6b35" stroke-width="0.7"
+          class="clickable" data-id="dedup" style="cursor:pointer"/>
+    <text x="220" y="382" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff6b35" opacity="0.45" letter-spacing="1.5">STEP</text>
+    <text x="220" y="395" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ff6b35">Deduplication</text>
+
+    <rect x="350" y="366" width="170" height="36" rx="2" fill="rgba(255,107,53,0.04)" stroke="#ff6b35" stroke-width="0.7"
+          class="clickable" data-id="filtering" style="cursor:pointer"/>
+    <text x="435" y="382" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff6b35" opacity="0.45" letter-spacing="1.5">STEP</text>
+    <text x="435" y="395" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ff6b35">Quality Filtering</text>
+
+    <rect x="580" y="366" width="170" height="36" rx="2" fill="rgba(255,107,53,0.04)" stroke="#ff6b35" stroke-width="0.7"
+          class="clickable" data-id="tokenization" style="cursor:pointer"/>
+    <text x="665" y="382" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff6b35" opacity="0.45" letter-spacing="1.5">STEP</text>
+    <text x="665" y="395" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ff6b35">Tokenization</text>
+
+    <rect x="795" y="366" width="170" height="36" rx="2" fill="rgba(255,107,53,0.04)" stroke="#ff6b35" stroke-width="0.7"
+          class="clickable" data-id="splits" style="cursor:pointer"/>
+    <text x="880" y="382" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff6b35" opacity="0.45" letter-spacing="1.5">STEP</text>
+    <text x="880" y="395" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ff6b35">Train/Val Splits</text>
+
+    <line x1="220" y1="402" x2="220" y2="433" stroke="#ff6b35" stroke-width="0.7"/>
+    <line x1="435" y1="402" x2="435" y2="433" stroke="#ff6b35" stroke-width="0.7"/>
+    <line x1="665" y1="402" x2="665" y2="433" stroke="#ff6b35" stroke-width="0.7"/>
+    <line x1="880" y1="402" x2="880" y2="433" stroke="#ff6b35" stroke-width="0.7"/>
+    <line x1="220" y1="433" x2="880" y2="433" stroke="#ff6b35" stroke-width="0.7"/>
+    <line x1="550" y1="433" x2="550" y2="455" stroke="#1e3a4a" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- ══════════════════════════════════════════════
+         PHASE 3 — MODEL ARCHITECTURE
+    ══════════════════════════════════════════════ -->
+    <rect x="400" y="458" width="300" height="46" rx="2" fill="rgba(0,229,255,0.05)" stroke="#00e5ff" stroke-width="1"
+          class="clickable" data-id="architecture" style="cursor:pointer"/>
+    <text x="550" y="475" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#00e5ff" opacity="0.5" letter-spacing="2">PHASE 3</text>
+    <text x="550" y="493" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" fill="#00e5ff" font-weight="500">MODEL ARCHITECTURE</text>
+
+    <line x1="200" y1="504" x2="900" y2="504" stroke="#1e3a4a" stroke-width="1"/>
+    <line x1="200" y1="504" x2="200" y2="538" stroke="#00e5ff" stroke-width="1" marker-end="url(#arrow-c)"/>
+    <line x1="375" y1="504" x2="375" y2="538" stroke="#00e5ff" stroke-width="1" marker-end="url(#arrow-c)"/>
+    <line x1="550" y1="504" x2="550" y2="538" stroke="#00e5ff" stroke-width="1" marker-end="url(#arrow-c)"/>
+    <line x1="725" y1="504" x2="725" y2="538" stroke="#00e5ff" stroke-width="1" marker-end="url(#arrow-c)"/>
+    <line x1="900" y1="504" x2="900" y2="538" stroke="#00e5ff" stroke-width="1" marker-end="url(#arrow-c)"/>
+
+    <rect x="115" y="541" width="170" height="36" rx="2" fill="rgba(0,229,255,0.04)" stroke="#00e5ff" stroke-width="0.7"
+          class="clickable" data-id="embedding-layer" style="cursor:pointer"/>
+    <text x="200" y="557" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#00e5ff" opacity="0.45" letter-spacing="1.5">LAYER</text>
+    <text x="200" y="570" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#00e5ff">Embeddings</text>
+
+    <rect x="290" y="541" width="170" height="36" rx="2" fill="rgba(0,229,255,0.04)" stroke="#00e5ff" stroke-width="0.7"
+          class="clickable" data-id="pos-enc" style="cursor:pointer"/>
+    <text x="375" y="557" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#00e5ff" opacity="0.45" letter-spacing="1.5">LAYER</text>
+    <text x="375" y="570" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#00e5ff">Positional Enc.</text>
+
+    <rect x="465" y="541" width="170" height="36" rx="2" fill="rgba(0,229,255,0.04)" stroke="#00e5ff" stroke-width="0.7"
+          class="clickable" data-id="self-attention" style="cursor:pointer"/>
+    <text x="550" y="557" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#00e5ff" opacity="0.45" letter-spacing="1.5">LAYER</text>
+    <text x="550" y="570" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#00e5ff">Self-Attention</text>
+
+    <rect x="640" y="541" width="170" height="36" rx="2" fill="rgba(0,229,255,0.04)" stroke="#00e5ff" stroke-width="0.7"
+          class="clickable" data-id="ffn" style="cursor:pointer"/>
+    <text x="725" y="557" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#00e5ff" opacity="0.45" letter-spacing="1.5">LAYER</text>
+    <text x="725" y="570" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#00e5ff">Feed-Forward</text>
+
+    <rect x="815" y="541" width="170" height="36" rx="2" fill="rgba(0,229,255,0.04)" stroke="#00e5ff" stroke-width="0.7"
+          class="clickable" data-id="softmax-out" style="cursor:pointer"/>
+    <text x="900" y="557" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#00e5ff" opacity="0.45" letter-spacing="1.5">LAYER</text>
+    <text x="900" y="570" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#00e5ff">Softmax Output</text>
+
+    <line x1="200" y1="577" x2="200" y2="608" stroke="#00e5ff" stroke-width="0.7"/>
+    <line x1="375" y1="577" x2="375" y2="608" stroke="#00e5ff" stroke-width="0.7"/>
+    <line x1="550" y1="577" x2="550" y2="608" stroke="#00e5ff" stroke-width="0.7"/>
+    <line x1="725" y1="577" x2="725" y2="608" stroke="#00e5ff" stroke-width="0.7"/>
+    <line x1="900" y1="577" x2="900" y2="608" stroke="#00e5ff" stroke-width="0.7"/>
+    <line x1="200" y1="608" x2="900" y2="608" stroke="#00e5ff" stroke-width="0.7"/>
+    <line x1="550" y1="608" x2="550" y2="630" stroke="#1e3a4a" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- ══════════════════════════════════════════════
+         PHASE 4 — PRE-TRAINING
+    ══════════════════════════════════════════════ -->
+    <rect x="400" y="633" width="300" height="46" rx="2" fill="rgba(168,255,120,0.05)" stroke="#a8ff78" stroke-width="1"
+          class="clickable" data-id="pretraining" style="cursor:pointer"/>
+    <text x="550" y="650" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#a8ff78" opacity="0.5" letter-spacing="2">PHASE 4</text>
+    <text x="550" y="668" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" fill="#a8ff78" font-weight="500">PRE-TRAINING</text>
+
+    <line x1="230" y1="679" x2="870" y2="679" stroke="#1e3a4a" stroke-width="1"/>
+    <line x1="230" y1="679" x2="230" y2="713" stroke="#a8ff78" stroke-width="1" marker-end="url(#arrow-g)"/>
+    <line x1="430" y1="679" x2="430" y2="713" stroke="#a8ff78" stroke-width="1" marker-end="url(#arrow-g)"/>
+    <line x1="630" y1="679" x2="630" y2="713" stroke="#a8ff78" stroke-width="1" marker-end="url(#arrow-g)"/>
+    <line x1="870" y1="679" x2="870" y2="713" stroke="#a8ff78" stroke-width="1" marker-end="url(#arrow-g)"/>
+
+    <rect x="145" y="716" width="170" height="36" rx="2" fill="rgba(168,255,120,0.04)" stroke="#a8ff78" stroke-width="0.7"
+          class="clickable" data-id="next-token" style="cursor:pointer"/>
+    <text x="230" y="732" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#a8ff78" opacity="0.45" letter-spacing="1.5">OBJECTIVE</text>
+    <text x="230" y="745" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#a8ff78">Next-Token Pred.</text>
+
+    <rect x="345" y="716" width="170" height="36" rx="2" fill="rgba(168,255,120,0.04)" stroke="#a8ff78" stroke-width="0.7"
+          class="clickable" data-id="loss" style="cursor:pointer"/>
+    <text x="430" y="732" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#a8ff78" opacity="0.45" letter-spacing="1.5">STEP</text>
+    <text x="430" y="745" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#a8ff78">Cross-Entropy Loss</text>
+
+    <rect x="545" y="716" width="170" height="36" rx="2" fill="rgba(168,255,120,0.04)" stroke="#a8ff78" stroke-width="0.7"
+          class="clickable" data-id="backprop" style="cursor:pointer"/>
+    <text x="630" y="732" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#a8ff78" opacity="0.45" letter-spacing="1.5">STEP</text>
+    <text x="630" y="745" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#a8ff78">Backpropagation</text>
+
+    <rect x="785" y="716" width="170" height="36" rx="2" fill="rgba(168,255,120,0.04)" stroke="#a8ff78" stroke-width="0.7"
+          class="clickable" data-id="optimizer" style="cursor:pointer"/>
+    <text x="870" y="732" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#a8ff78" opacity="0.45" letter-spacing="1.5">STEP</text>
+    <text x="870" y="745" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#a8ff78">Optimizer (Adam)</text>
+
+    <!-- Backprop loop indicator -->
+    <path d="M870 752 Q920 800 870 848 Q820 890 550 900 Q280 910 230 848 Q180 800 230 752"
+          stroke="#a8ff78" stroke-width="0.5" fill="none" stroke-dasharray="4 4" opacity="0.3"/>
+    <text x="940" y="815" font-family="'DM Mono',monospace" font-size="8" fill="#a8ff78" opacity="0.4">ITERATE</text>
+    <text x="940" y="828" font-family="'DM Mono',monospace" font-size="8" fill="#a8ff78" opacity="0.4">N EPOCHS</text>
+
+    <line x1="230" y1="752" x2="230" y2="783" stroke="#a8ff78" stroke-width="0.7"/>
+    <line x1="430" y1="752" x2="430" y2="783" stroke="#a8ff78" stroke-width="0.7"/>
+    <line x1="630" y1="752" x2="630" y2="783" stroke="#a8ff78" stroke-width="0.7"/>
+    <line x1="870" y1="752" x2="870" y2="783" stroke="#a8ff78" stroke-width="0.7"/>
+    <line x1="230" y1="783" x2="870" y2="783" stroke="#a8ff78" stroke-width="0.7"/>
+    <line x1="550" y1="783" x2="550" y2="905" stroke="#1e3a4a" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- ══════════════════════════════════════════════
+         PHASE 5 — FINE-TUNING
+    ══════════════════════════════════════════════ -->
+    <rect x="400" y="908" width="300" height="46" rx="2" fill="rgba(199,125,255,0.05)" stroke="#c77dff" stroke-width="1"
+          class="clickable" data-id="finetuning" style="cursor:pointer"/>
+    <text x="550" y="925" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#c77dff" opacity="0.5" letter-spacing="2">PHASE 5</text>
+    <text x="550" y="943" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" fill="#c77dff" font-weight="500">FINE-TUNING</text>
+
+    <line x1="200" y1="954" x2="900" y2="954" stroke="#1e3a4a" stroke-width="1"/>
+    <line x1="200" y1="954" x2="200" y2="988" stroke="#c77dff" stroke-width="1" marker-end="url(#arrow-p)"/>
+    <line x1="390" y1="954" x2="390" y2="988" stroke="#c77dff" stroke-width="1" marker-end="url(#arrow-p)"/>
+    <line x1="580" y1="954" x2="580" y2="988" stroke="#c77dff" stroke-width="1" marker-end="url(#arrow-p)"/>
+    <line x1="750" y1="954" x2="750" y2="988" stroke="#c77dff" stroke-width="1" marker-end="url(#arrow-p)"/>
+    <line x1="900" y1="954" x2="900" y2="988" stroke="#c77dff" stroke-width="1" marker-end="url(#arrow-p)"/>
+
+    <rect x="115" y="991" width="170" height="36" rx="2" fill="rgba(199,125,255,0.04)" stroke="#c77dff" stroke-width="0.7"
+          class="clickable" data-id="sft" style="cursor:pointer"/>
+    <text x="200" y="1007" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#c77dff" opacity="0.45" letter-spacing="1.5">METHOD</text>
+    <text x="200" y="1020" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#c77dff">Supervised FT (SFT)</text>
+
+    <rect x="305" y="991" width="170" height="36" rx="2" fill="rgba(199,125,255,0.04)" stroke="#c77dff" stroke-width="0.7"
+          class="clickable" data-id="rlhf" style="cursor:pointer"/>
+    <text x="390" y="1007" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#c77dff" opacity="0.45" letter-spacing="1.5">METHOD</text>
+    <text x="390" y="1020" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#c77dff">RLHF</text>
+
+    <rect x="495" y="991" width="170" height="36" rx="2" fill="rgba(199,125,255,0.04)" stroke="#c77dff" stroke-width="0.7"
+          class="clickable" data-id="reward-model" style="cursor:pointer"/>
+    <text x="580" y="1007" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#c77dff" opacity="0.45" letter-spacing="1.5">COMPONENT</text>
+    <text x="580" y="1020" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#c77dff">Reward Model</text>
+
+    <rect x="665" y="991" width="170" height="36" rx="2" fill="rgba(199,125,255,0.04)" stroke="#c77dff" stroke-width="0.7"
+          class="clickable" data-id="ppo" style="cursor:pointer"/>
+    <text x="750" y="1007" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#c77dff" opacity="0.45" letter-spacing="1.5">ALGORITHM</text>
+    <text x="750" y="1020" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#c77dff">PPO / DPO</text>
+
+    <rect x="815" y="991" width="170" height="36" rx="2" fill="rgba(199,125,255,0.04)" stroke="#c77dff" stroke-width="0.7"
+          class="clickable" data-id="alignment" style="cursor:pointer"/>
+    <text x="900" y="1007" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#c77dff" opacity="0.45" letter-spacing="1.5">GOAL</text>
+    <text x="900" y="1020" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#c77dff">Alignment</text>
+
+    <line x1="200" y1="1027" x2="200" y2="1058" stroke="#c77dff" stroke-width="0.7"/>
+    <line x1="390" y1="1027" x2="390" y2="1058" stroke="#c77dff" stroke-width="0.7"/>
+    <line x1="580" y1="1027" x2="580" y2="1058" stroke="#c77dff" stroke-width="0.7"/>
+    <line x1="750" y1="1027" x2="750" y2="1058" stroke="#c77dff" stroke-width="0.7"/>
+    <line x1="900" y1="1027" x2="900" y2="1058" stroke="#c77dff" stroke-width="0.7"/>
+    <line x1="200" y1="1058" x2="900" y2="1058" stroke="#c77dff" stroke-width="0.7"/>
+    <line x1="550" y1="1058" x2="550" y2="1080" stroke="#1e3a4a" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- ══════════════════════════════════════════════
+         PHASE 6 — EVALUATION
+    ══════════════════════════════════════════════ -->
+    <rect x="400" y="1083" width="300" height="46" rx="2" fill="rgba(255,77,109,0.05)" stroke="#ff4d6d" stroke-width="1"
+          class="clickable" data-id="evaluation" style="cursor:pointer"/>
+    <text x="550" y="1100" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff4d6d" opacity="0.5" letter-spacing="2">PHASE 6</text>
+    <text x="550" y="1118" text-anchor="middle" font-family="'DM Mono',monospace" font-size="13" fill="#ff4d6d" font-weight="500">EVALUATION</text>
+
+    <line x1="240" y1="1129" x2="860" y2="1129" stroke="#1e3a4a" stroke-width="1"/>
+    <line x1="240" y1="1129" x2="240" y2="1163" stroke="#ff4d6d" stroke-width="1" marker-end="url(#arrow-r)"/>
+    <line x1="450" y1="1129" x2="450" y2="1163" stroke="#ff4d6d" stroke-width="1" marker-end="url(#arrow-r)"/>
+    <line x1="660" y1="1129" x2="660" y2="1163" stroke="#ff4d6d" stroke-width="1" marker-end="url(#arrow-r)"/>
+    <line x1="860" y1="1129" x2="860" y2="1163" stroke="#ff4d6d" stroke-width="1" marker-end="url(#arrow-r)"/>
+
+    <rect x="155" y="1166" width="170" height="36" rx="2" fill="rgba(255,77,109,0.04)" stroke="#ff4d6d" stroke-width="0.7"
+          class="clickable" data-id="benchmarks" style="cursor:pointer"/>
+    <text x="240" y="1182" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff4d6d" opacity="0.45" letter-spacing="1.5">EVAL</text>
+    <text x="240" y="1195" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ff4d6d">Benchmarks</text>
+
+    <rect x="365" y="1166" width="170" height="36" rx="2" fill="rgba(255,77,109,0.04)" stroke="#ff4d6d" stroke-width="0.7"
+          class="clickable" data-id="human-eval" style="cursor:pointer"/>
+    <text x="450" y="1182" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff4d6d" opacity="0.45" letter-spacing="1.5">EVAL</text>
+    <text x="450" y="1195" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ff4d6d">Human Evaluation</text>
+
+    <rect x="575" y="1166" width="170" height="36" rx="2" fill="rgba(255,77,109,0.04)" stroke="#ff4d6d" stroke-width="0.7"
+          class="clickable" data-id="safety-eval" style="cursor:pointer"/>
+    <text x="660" y="1182" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff4d6d" opacity="0.45" letter-spacing="1.5">EVAL</text>
+    <text x="660" y="1195" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ff4d6d">Safety / Red-Team</text>
+
+    <rect x="775" y="1166" width="170" height="36" rx="2" fill="rgba(255,77,109,0.04)" stroke="#ff4d6d" stroke-width="0.7"
+          class="clickable" data-id="perplexity" style="cursor:pointer"/>
+    <text x="860" y="1182" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff4d6d" opacity="0.45" letter-spacing="1.5">METRIC</text>
+    <text x="860" y="1195" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ff4d6d">Perplexity / BLEU</text>
+
+    <line x1="240" y1="1202" x2="240" y2="1233" stroke="#ff4d6d" stroke-width="0.7"/>
+    <line x1="450" y1="1202" x2="450" y2="1233" stroke="#ff4d6d" stroke-width="0.7"/>
+    <line x1="660" y1="1202" x2="660" y2="1233" stroke="#ff4d6d" stroke-width="0.7"/>
+    <line x1="860" y1="1202" x2="860" y2="1233" stroke="#ff4d6d" stroke-width="0.7"/>
+    <line x1="240" y1="1233" x2="860" y2="1233" stroke="#ff4d6d" stroke-width="0.7"/>
+    <line x1="550" y1="1233" x2="550" y2="1255" stroke="#1e3a4a" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- ══════════════════════════════════════════════
+         PHASE 7 — DEPLOYMENT
+    ══════════════════════════════════════════════ -->
+    <rect x="375" y="1258" width="350" height="52" rx="2" fill="rgba(255,77,109,0.07)" stroke="#ff4d6d" stroke-width="1.5"
+          class="clickable" data-id="deployment" style="cursor:pointer"/>
+    <text x="550" y="1277" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff4d6d" opacity="0.5" letter-spacing="2">PHASE 7</text>
+    <text x="550" y="1298" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="20" fill="#ff4d6d" letter-spacing="3">DEPLOYED MODEL</text>
+
+    <!-- Quantization / Inference sub-nodes -->
+    <line x1="380" y1="1310" x2="380" y2="1343" stroke="#ff4d6d" stroke-width="0.7" marker-end="url(#arrow-r)"/>
+    <line x1="550" y1="1310" x2="550" y2="1343" stroke="#ff4d6d" stroke-width="0.7" marker-end="url(#arrow-r)"/>
+    <line x1="720" y1="1310" x2="720" y2="1343" stroke="#ff4d6d" stroke-width="0.7" marker-end="url(#arrow-r)"/>
+
+    <rect x="290" y="1346" width="180" height="36" rx="2" fill="rgba(255,77,109,0.04)" stroke="#ff4d6d" stroke-width="0.7"
+          class="clickable" data-id="quantization" style="cursor:pointer"/>
+    <text x="380" y="1362" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff4d6d" opacity="0.45">OPTIMIZATION</text>
+    <text x="380" y="1375" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ff4d6d">Quantization</text>
+
+    <rect x="460" y="1346" width="180" height="36" rx="2" fill="rgba(255,77,109,0.04)" stroke="#ff4d6d" stroke-width="0.7"
+          class="clickable" data-id="inference" style="cursor:pointer"/>
+    <text x="550" y="1362" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff4d6d" opacity="0.45">RUNTIME</text>
+    <text x="550" y="1375" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ff4d6d">Inference Engine</text>
+
+    <rect x="630" y="1346" width="180" height="36" rx="2" fill="rgba(255,77,109,0.04)" stroke="#ff4d6d" stroke-width="0.7"
+          class="clickable" data-id="api" style="cursor:pointer"/>
+    <text x="720" y="1362" text-anchor="middle" font-family="'DM Mono',monospace" font-size="8" fill="#ff4d6d" opacity="0.45">OUTPUT</text>
+    <text x="720" y="1375" text-anchor="middle" font-family="'DM Mono',monospace" font-size="10" fill="#ff4d6d">API / Product</text>
+
+    <!-- Feedback loop -->
+    <path d="M720 1382 Q780 1500 550 1520 Q320 1540 180 1400 Q120 1200 180 900 Q200 800 180 500"
+          stroke="#546678" stroke-width="0.8" fill="none" stroke-dasharray="5 5" opacity="0.35"/>
+    <text x="800" y="1470" font-family="'DM Mono',monospace" font-size="8" fill="#546678" opacity="0.5">USER FEEDBACK</text>
+    <text x="800" y="1483" font-family="'DM Mono',monospace" font-size="8" fill="#546678" opacity="0.5">→ NEXT VERSION</text>
+
+    <!-- Animated flow dots along main spine -->
+    <circle r="3" fill="#00e5ff" opacity="0.6">
+      <animateMotion dur="4s" repeatCount="indefinite"
+        path="M550,72 L550,283 L550,458 L550,633 L550,908 L550,1083 L550,1258"/>
+    </circle>
+    <circle r="2" fill="#a8ff78" opacity="0.4">
+      <animateMotion dur="4s" begin="1.3s" repeatCount="indefinite"
+        path="M550,72 L550,283 L550,458 L550,633 L550,908 L550,1083 L550,1258"/>
+    </circle>
+    <circle r="2" fill="#f7c948" opacity="0.4">
+      <animateMotion dur="4s" begin="2.6s" repeatCount="indefinite"
+        path="M550,72 L550,283 L550,458 L550,633 L550,908 L550,1083 L550,1258"/>
+    </circle>
+
+  </svg>
+</div>
+
+<!-- Detail Panel -->
+<div class="detail-panel" id="detail-panel">
+  <button class="detail-close" onclick="closePanel()">[ close ]</button>
+  <h3 id="dp-title"></h3>
+  <span class="tag" id="dp-tag"></span>
+  <p id="dp-desc"></p>
+  <ul id="dp-list"></ul>
+</div>
+
+<script>
+const DATA = {
+  "data-collection": {
+    title: "DATA COLLECTION",
+    tag: "Phase 1 — The Raw Material",
+    desc: "Everything the LLM will ever know comes from here. Trillions of tokens scraped, licensed, and curated from every corner of human-written text.",
+    points: ["Common Crawl — petabytes of web text", "Books3, Project Gutenberg, ArXiv", "GitHub code repositories", "Wikipedia, StackExchange, Reddit", "Scale: GPT-4 trained on ~13 trillion tokens"]
+  },
+  "web-crawl": {
+    title: "WEB CRAWL",
+    tag: "Source — Common Crawl / C4",
+    desc: "Automated crawlers index billions of web pages. Raw HTML is stripped to plain text. This is the largest but noisiest data source.",
+    points: ["Common Crawl: 3.15 billion web pages", "C4 (Colossal Clean Crawled Corpus)", "Filtered for language, length, quality", "High duplication rate — requires heavy cleaning"]
+  },
+  "books": {
+    title: "BOOKS / PAPERS",
+    tag: "Source — Long-form knowledge",
+    desc: "High-quality, long-form text teaches reasoning, narrative coherence, and domain knowledge that web text alone cannot provide.",
+    points: ["Books1, Books2, Pile-Books3", "ArXiv: 2M+ scientific papers", "PubMed, Semantic Scholar", "Dense factual and logical reasoning patterns"]
+  },
+  "code": {
+    title: "CODE REPOS",
+    tag: "Source — GitHub / Stack",
+    desc: "Code trains the model in formal logical structure, function composition, and precise cause-effect reasoning — skills that transfer to language.",
+    points: ["GitHub: 100M+ repositories", "Stack Overflow Q&A pairs", "100+ programming languages", "Dramatically improves logical reasoning"]
+  },
+  "curated": {
+    title: "CURATED DATASETS",
+    tag: "Source — High-signal data",
+    desc: "Small, high-quality human-written or human-selected datasets that punch far above their weight in training quality.",
+    points: ["OpenWebText, The Pile", "Wikipedia (multi-language)", "Instruction datasets (FLAN, Alpaca)", "Quality > quantity for specialised domains"]
+  },
+  "preprocessing": {
+    title: "PREPROCESSING",
+    tag: "Phase 2 — Making Data Learnable",
+    desc: "Raw text is unusable directly. Preprocessing transforms gigabytes of messy text into clean, structured sequences of tokens the model can learn from.",
+    points: []
+  },
+  "dedup": {
+    title: "DEDUPLICATION",
+    tag: "Preprocessing — Remove copies",
+    desc: "Identical or near-identical text bloats the dataset and causes the model to overfit on repeated content, harming generalisation.",
+    points: ["Exact-match deduplication (MD5/SHA hash)", "MinHash LSH for near-duplicate detection", "Can remove 30-50% of raw web data", "Critical for preventing memorisation"]
+  },
+  "filtering": {
+    title: "QUALITY FILTERING",
+    tag: "Preprocessing — Remove noise",
+    desc: "Classifier models and heuristic rules remove low-quality, harmful, or irrelevant content before it can corrupt the model's learning.",
+    points: ["Perplexity filtering (remove gibberish)", "Language identification (fastText)", "NSFW / toxicity classifiers", "Heuristic rules: length, punctuation ratio, etc."]
+  },
+  "tokenization": {
+    title: "TOKENIZATION",
+    tag: "Preprocessing — Text → Numbers",
+    desc: "Text must be converted to integer IDs before the model can process it. Tokenizers learn subword units that balance vocabulary size and coverage.",
+    points: ["BPE (Byte-Pair Encoding) — GPT series", "SentencePiece / Unigram — LLaMA, T5", "Vocab size: 32K–128K tokens", "Unknown words split into subword pieces"]
+  },
+  "splits": {
+    title: "TRAIN / VAL SPLITS",
+    tag: "Preprocessing — Preventing Leakage",
+    desc: "A held-out validation set lets you measure actual generalisation. Without it, you cannot tell whether the model is learning or just memorising.",
+    points: ["Typically 99% train, 1% validation", "Validation used for perplexity tracking", "Test set never seen during any training", "Time-based splits for temporal data"]
+  },
+  "architecture": {
+    title: "MODEL ARCHITECTURE",
+    tag: "Phase 3 — The Transformer",
+    desc: "All modern LLMs are built on the Transformer, introduced in 'Attention Is All You Need' (2017). It processes sequences in parallel using self-attention.",
+    points: ["Encoder-only: BERT (understanding)", "Decoder-only: GPT, LLaMA (generation)", "Encoder-Decoder: T5, BART (translation)", "Parameters: 7B → 1T+"]
+  },
+  "embedding-layer": {
+    title: "EMBEDDINGS",
+    tag: "Layer — Token → Vector",
+    desc: "Each token ID is mapped to a dense floating-point vector. These vectors are learned during training and encode semantic relationships.",
+    points: ["Embedding matrix: vocab_size × d_model", "d_model typically 512–8192", "Similar tokens cluster in embedding space", "Positional info added on top"]
+  },
+  "pos-enc": {
+    title: "POSITIONAL ENCODING",
+    tag: "Layer — Order Information",
+    desc: "Transformers process all tokens simultaneously, so position must be injected explicitly. Without it, 'cat bites dog' = 'dog bites cat'.",
+    points: ["Sinusoidal: fixed sin/cos waves (original)", "Learned: trainable position embeddings", "RoPE: Rotary Position Embedding (LLaMA)", "ALiBi: linear bias for long contexts"]
+  },
+  "self-attention": {
+    title: "SELF-ATTENTION",
+    tag: "Layer — The Core Mechanism",
+    desc: "Each token attends to every other token, computing how much each should influence its representation. Q, K, V projections + scaled dot-product.",
+    points: ["Q = W_q @ x, K = W_k @ x, V = W_v @ x", "score(q,k) = (q·k) / √d_k", "weights = softmax(scores)", "output = weights @ V", "Multi-head: N heads run in parallel"]
+  },
+  "ffn": {
+    title: "FEED-FORWARD NETWORK",
+    tag: "Layer — Nonlinear Transform",
+    desc: "After attention mixes token information, the FFN applies a per-token nonlinear transformation. This is where most model 'knowledge' is stored.",
+    points: ["Two linear layers + activation (ReLU/GELU/SiLU)", "d_ff typically 4× d_model", "Processes each token independently", "Residual connection + LayerNorm wraps each sub-layer"]
+  },
+  "softmax-out": {
+    title: "SOFTMAX OUTPUT",
+    tag: "Layer — Vector → Probability",
+    desc: "The final hidden state is projected to vocabulary size and normalised into a probability distribution over all possible next tokens.",
+    points: ["Linear: d_model → vocab_size (logits)", "Softmax: logits → probabilities", "Sampling: temperature, top-k, top-p", "Greedy: argmax for deterministic output"]
+  },
+  "pretraining": {
+    title: "PRE-TRAINING",
+    tag: "Phase 4 — Learning Language",
+    desc: "The model reads trillions of tokens and learns to predict each next token. No human labels — the text itself is the supervision signal.",
+    points: ["Causal language modelling (CLM)", "Runs for weeks/months on thousands of GPUs", "GPT-4: estimated $100M+ compute cost", "Learns grammar, facts, reasoning, code"]
+  },
+  "next-token": {
+    title: "NEXT-TOKEN PREDICTION",
+    tag: "Objective — Self-Supervised Learning",
+    desc: "Given tokens 1…N, predict token N+1. This simple objective, applied at scale, forces the model to model everything about language.",
+    points: ["Teacher forcing: ground truth fed at each step", "Autoregressive: left-to-right generation", "Masked LM (BERT): predict masked tokens", "No human annotation required"]
+  },
+  "loss": {
+    title: "CROSS-ENTROPY LOSS",
+    tag: "Step — Measuring Error",
+    desc: "The model's predicted probability for the correct token is measured. The loss is the negative log-probability — lower means more confident and correct.",
+    points: ["L = -log P(correct_token)", "Averaged across all positions in batch", "Perplexity = exp(mean loss)", "Perfect model: loss → 0, perplexity → 1"]
+  },
+  "backprop": {
+    title: "BACKPROPAGATION",
+    tag: "Step — Computing Gradients",
+    desc: "The chain rule propagates the loss signal backwards through every layer, computing how much each weight contributed to the error.",
+    points: ["Automatic differentiation (autograd)", "Gradient flows through all N layers", "Mixed precision (FP16/BF16) for efficiency", "Gradient clipping prevents exploding values"]
+  },
+  "optimizer": {
+    title: "OPTIMIZER (ADAM)",
+    tag: "Step — Updating Weights",
+    desc: "Adam combines momentum and adaptive learning rates per parameter. It adjusts each of the model's billions of weights to reduce future loss.",
+    points: ["Adam: m_t = β1*m + (1-β1)*g", "AdamW adds weight decay regularisation", "Learning rate schedule: warmup + cosine decay", "Gradient accumulation for large batches"]
+  },
+  "finetuning": {
+    title: "FINE-TUNING",
+    tag: "Phase 5 — Alignment",
+    desc: "A pre-trained model knows language but doesn't know how to be helpful, honest, or harmless. Fine-tuning shapes its behaviour to match human intent.",
+    points: []
+  },
+  "sft": {
+    title: "SUPERVISED FINE-TUNING",
+    tag: "Method — SFT",
+    desc: "Human-written demonstrations of ideal model behaviour are used to teach the model what good responses look like.",
+    points: ["Prompt → ideal response pairs", "Typically 10K–1M examples", "Much cheaper than pre-training", "Teaches format, tone, instruction-following"]
+  },
+  "rlhf": {
+    title: "RLHF",
+    tag: "Method — Reinforcement Learning from Human Feedback",
+    desc: "Human raters compare model outputs and rank them. This preference data trains a reward model, which then guides further training via RL.",
+    points: ["Step 1: Collect preference comparisons", "Step 2: Train reward model on preferences", "Step 3: Optimise policy against reward model", "Used in GPT-4, Claude, Gemini"]
+  },
+  "reward-model": {
+    title: "REWARD MODEL",
+    tag: "Component — Learned Human Preferences",
+    desc: "A separate model trained to score outputs the way humans would. It becomes the objective function for reinforcement learning.",
+    points: ["Same architecture as policy model", "Outputs scalar reward score", "Trained on (prompt, winner, loser) triples", "Risk: reward hacking / Goodhart's Law"]
+  },
+  "ppo": {
+    title: "PPO / DPO",
+    tag: "Algorithm — Policy Optimisation",
+    desc: "Proximal Policy Optimisation keeps weight updates small to prevent catastrophic forgetting. DPO directly optimises on preferences without a reward model.",
+    points: ["PPO: clip ratio to stay near old policy", "KL divergence penalty vs base model", "DPO: simpler, no RL loop required", "GRPO: used in DeepSeek-R1 reasoning"]
+  },
+  "alignment": {
+    title: "ALIGNMENT",
+    tag: "Goal — Helpful, Honest, Harmless",
+    desc: "The overarching goal of fine-tuning: a model whose values and capabilities match what users and society actually want.",
+    points: ["Helpfulness: answers questions accurately", "Honesty: doesn't hallucinate or deceive", "Harmlessness: refuses dangerous requests", "Constitutional AI (Anthropic Claude)"]
+  },
+  "evaluation": {
+    title: "EVALUATION",
+    tag: "Phase 6 — Measuring What Matters",
+    desc: "Training a model is only half the problem. Rigorous evaluation reveals what it knows, what it gets wrong, and where it's dangerous.",
+    points: []
+  },
+  "benchmarks": {
+    title: "BENCHMARKS",
+    tag: "Eval — Standardised Tests",
+    desc: "Held-out question sets measure specific capabilities: reasoning, knowledge, maths, code. All have known correct answers.",
+    points: ["MMLU: 57 subjects, 14K questions", "HumanEval: code generation", "GSM8K: grade-school maths", "HellaSwag, ARC, WinoGrande"]
+  },
+  "human-eval": {
+    title: "HUMAN EVALUATION",
+    tag: "Eval — Ground Truth Preference",
+    desc: "Automated benchmarks miss nuance. Human raters score helpfulness, coherence, and safety in open-ended tasks.",
+    points: ["A/B comparisons between model versions", "Chatbot Arena: crowd-sourced ELO ranking", "Expert domain evaluation (law, medicine)", "Expensive but catches what metrics miss"]
+  },
+  "safety-eval": {
+    title: "SAFETY / RED-TEAM",
+    tag: "Eval — Adversarial Testing",
+    desc: "Dedicated teams attempt to make the model produce harmful outputs. Every found failure mode is patched before release.",
+    points: ["Automated red-teaming with attack LLMs", "Human red teams with adversarial prompts", "Jailbreak detection and patching", "Bias, toxicity, and misinformation audits"]
+  },
+  "perplexity": {
+    title: "PERPLEXITY / BLEU",
+    tag: "Metric — Quantitative Signal",
+    desc: "Mathematical metrics provide fast, cheap, reproducible quality signals during and after training, though they correlate imperfectly with usefulness.",
+    points: ["Perplexity: exp(mean cross-entropy loss)", "Lower perplexity = better language model", "BLEU: n-gram overlap for translation", "ROUGE: recall-based for summarisation"]
+  },
+  "deployment": {
+    title: "DEPLOYED MODEL",
+    tag: "Phase 7 — In Production",
+    desc: "The trained, evaluated model is optimised for efficient inference and served via API or embedded in products used by millions of people.",
+    points: []
+  },
+  "quantization": {
+    title: "QUANTIZATION",
+    tag: "Optimisation — Smaller & Faster",
+    desc: "Weights stored in float32 are compressed to int8 or int4, reducing memory footprint and increasing inference speed with minimal quality loss.",
+    points: ["FP32 → BF16 → INT8 → INT4", "GPTQ, AWQ: weight-only quantisation", "4-bit: 4× memory reduction vs FP16", "Quality loss: ~1-2% on benchmarks"]
+  },
+  "inference": {
+    title: "INFERENCE ENGINE",
+    tag: "Runtime — Serving at Scale",
+    desc: "Specialised software stacks optimise the matrix operations at the heart of LLM inference for maximum throughput on GPU/TPU hardware.",
+    points: ["vLLM: PagedAttention for KV cache", "TensorRT-LLM: NVIDIA optimised serving", "Continuous batching: serve many users together", "KV cache reuse for long conversations"]
+  },
+  "api": {
+    title: "API / PRODUCT",
+    tag: "Output — User-Facing",
+    desc: "The model is exposed to the world via an API or embedded in a product. User interactions begin the feedback loop for the next version.",
+    points: ["REST API with streaming support", "Rate limiting, auth, safety filters", "System prompts shape model behaviour", "User feedback → data for next training run"]
+  }
+};
+
+// Sancta project mapping: canonical node id → implementation
+const SANCTA = {
+  "web-crawl": "Moltbook feed (posts, comments), SIEM chat",
+  "books": "knowledge/*.txt, Soul knowledge.txt",
+  "code": "N/A — rule-based agent",
+  "curated": "SOUL_SYSTEM_PROMPT.md, knowledge/",
+  "dedup": "list(dict.fromkeys(...)) on concepts, quotes, fragments",
+  "filtering": "sanitize_input(), HTML strip, length caps",
+  "tokenization": "sancta_generative._tokenize()",
+  "splits": "Knowledge pool for generation; held-out for red-team",
+  "embedding-layer": "_token_vec() d_model=32",
+  "pos-enc": "_pos_vec() sinusoidal",
+  "self-attention": "TransformerBlock × 2, n_heads=4",
+  "ffn": "FeedForward d_ff=64, ReLU",
+  "softmax-out": "Fragment Selector (cosine + softmax)",
+  "next-token": "Fragment selection by context similarity",
+  "loss": "N/A — static weights",
+  "sft": "Mood templates, openers, closers",
+  "rlhf": "Q-table, karma, Monte Carlo",
+  "reward-model": "World model P(engagement), P(hostility)",
+  "alignment": "SOUL_SYSTEM_PROMPT, epistemic humility",
+  "benchmarks": "Policy test, content ladder",
+  "human-eval": "Moltbook karma, community reception",
+  "safety-eval": "JAIS red team, injection defence",
+  "perplexity": "Defence rate, FP/FN, delusion metrics",
+  "quantization": "N/A — pure Python",
+  "inference": "generate_reply(), generate_post()",
+  "api": "SIEM /api/chat, Moltbook REST"
+};
+
+function openPanel(id) {
+  const d = DATA[id];
+  if (!d) return;
+  const panel = document.getElementById('detail-panel');
+  document.getElementById('dp-title').textContent = d.title;
+  document.getElementById('dp-tag').textContent = d.tag;
+  document.getElementById('dp-desc').textContent = d.desc;
+  const list = document.getElementById('dp-list');
+  let items = d.points.map(p => `<li>→ ${p}</li>`);
+  if (SANCTA[id]) {
+    items.push(`<li style="color:var(--accent1);margin-top:0.5rem;">▸ Sancta: ${SANCTA[id]}</li>`);
+  }
+  list.innerHTML = items.join('');
+
+  // colour by phase
+  const phaseColors = {
+    'Phase 1': 'var(--accent4)', 'Phase 2': 'var(--accent2)',
+    'Phase 3': 'var(--accent1)', 'Phase 4': 'var(--accent3)',
+    'Phase 5': 'var(--accent5)', 'Phase 6': '#ff4d6d',
+    'Phase 7': '#ff4d6d'
+  };
+  const col = Object.entries(phaseColors).find(([k]) => d.tag.includes(k));
+  panel.style.borderColor = col ? col[1] : 'var(--border)';
+  document.getElementById('dp-title').style.color = col ? col[1] : 'white';
+  panel.classList.add('visible');
+}
+
+function closePanel() {
+  document.getElementById('detail-panel').classList.remove('visible');
+}
+
+document.querySelectorAll('.clickable').forEach(el => {
+  el.addEventListener('click', () => openPanel(el.dataset.id));
+  el.addEventListener('mouseenter', function() {
+    this.style.filter = 'brightness(1.3)';
+  });
+  el.addEventListener('mouseleave', function() {
+    this.style.filter = '';
+  });
+});
+
+document.getElementById('tree-svg').addEventListener('click', e => {
+  if (!e.target.closest('.clickable')) closePanel();
+});
+</script>
+</body>
+</html>

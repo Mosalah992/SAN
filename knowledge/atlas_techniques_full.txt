@@ -1,0 +1,136 @@
+MITRE ATLAS TECHNIQUE REFERENCE — FULL CATALOG
+================================================
+Complete technique descriptions for Sancta GPT training.
+Each entry provides detection context for the security analyst.
+
+AML.T0000 — ML Model Access
+Adversary gains access to the ML model for inference. This is the prerequisite for most AI attacks. Access can be white-box (full model weights), black-box (API only), or gray-box (partial knowledge). Monitor for: unusual API access patterns, bulk query attempts, systematic input probing.
+
+AML.T0001 — ML Attack Staging
+Preparing adversarial inputs using a local or surrogate model. Attackers train shadow models to develop transferable adversarial examples. They test attack payloads offline before deploying against the production system. Detection: monitoring for probe patterns that indicate systematic model testing.
+
+AML.T0002 — Search for Victim's Publicly Available ML Models
+Searching model registries (Hugging Face, TensorFlow Hub), academic papers, GitHub repositories, and company blogs for information about the target model architecture and training methodology. This reconnaissance informs attack strategy.
+
+AML.T0003 — Search for Victim's Publicly Available Research Materials
+Reviewing published papers, conference presentations, blog posts, and documentation that reveal model architecture decisions, training procedures, dataset choices, and known limitations. This intelligence shapes the attack approach.
+
+AML.T0004 — Search for Technical Blogs and Code
+Finding engineering blog posts, code repositories, Jupyter notebooks, and tutorials related to the target system. These often reveal implementation details not covered in formal documentation.
+
+AML.T0005 — Active Scanning
+Sending probing inputs to the target model to gather information. This includes: testing input boundaries (max length, accepted formats), analyzing error messages, measuring response times for different input types, and mapping the model's behavioral envelope.
+
+AML.T0006 — Acquire Public ML Artifacts
+Downloading publicly available model weights, training datasets, tokenizers, and preprocessing code. These artifacts enable local experimentation and attack development without alerting the target.
+
+AML.T0007 — Develop Adversarial ML Attacks
+Creating novel attack techniques or adapting existing ones for the target model. This includes adversarial example generation, prompt injection payload development, poisoning sample creation, and evasion technique refinement.
+
+AML.T0010 — ML Supply Chain Compromise
+Compromising components in the ML pipeline: poisoned training data from scraped sources, backdoored model weights in shared repositories, vulnerable dependencies in ML frameworks, and trojanized preprocessing code. The AI supply chain has many unverified trust relationships.
+
+AML.T0011 — Publish Poisoned ML Models
+Uploading backdoored or compromised models to public repositories where victims may download and use them. The poisoning may be targeted (specific trigger activates backdoor) or untargeted (general performance degradation).
+
+AML.T0012 — Valid Accounts
+Using legitimate credentials to access ML systems. Stolen API keys, compromised service accounts, or social engineering of ML engineers provides authenticated access that bypasses network-level controls.
+
+AML.T0013 — Phishing for ML-specific Information
+Targeted phishing campaigns that seek: ML pipeline credentials, training data access, model repository permissions, API keys, and internal architecture documentation. Spear-phishing ML engineers with relevant technical pretexts.
+
+AML.T0014 — Supply Chain Compromise of ML Software Dependencies
+Attacking the software supply chain: compromised PyTorch/TensorFlow packages, poisoned pip/conda packages, backdoored CUDA drivers, and vulnerable serving frameworks. A single compromised dependency can affect thousands of deployed models.
+
+AML.T0015 — Evade ML Model
+Crafting inputs that cause incorrect model outputs while appearing normal to humans. Text domain: synonym substitution, character-level perturbation, paraphrase attacks, and semantic preserving modifications. Adversarial examples transfer between similar models, enabling black-box attacks.
+
+AML.T0016 — Obtain Capabilities
+Acquiring tools and resources for the attack campaign: GPU compute for adversarial example generation, datasets for training surrogate models, and adversarial ML toolkits (ART, TextAttack, PromptBench).
+
+AML.T0017 — Develop Capabilities
+Building custom tools: adversarial example generators tuned to the target, automated prompt injection testers, model extraction pipelines, and custom evaluation frameworks for measuring attack success rates.
+
+AML.T0018 — Backdoor ML Model
+Inserting persistent backdoor functionality into a model. Trigger-based backdoors activate only when specific patterns appear in the input. Clean-label backdoors don't require modifying labels. Backdoor detection is an active area of research with techniques like Neural Cleanse and Activation Clustering.
+
+AML.T0019 — Publish Poisoned Datasets
+Uploading contaminated datasets to public repositories (Kaggle, Papers with Code, government data portals). Poisoning can be targeted (specific class manipulation) or availability (general degradation). Data consumers rarely verify dataset integrity.
+
+AML.T0020 — Poison Training Data
+Directly contaminating the training data pipeline. This includes: modifying labeled datasets, injecting synthetic samples, corrupting data augmentation processes, and manipulating feedback loops where model outputs become future training data.
+
+AML.T0024 — Exfiltration via ML Inference API
+Using the model's API to extract information: model parameters (through careful querying), training data (through memorization exploitation), and system architecture details (through error message analysis). Rate limiting and query monitoring are primary defenses.
+
+AML.T0025 — Exfiltration via Cyber Means
+Using traditional cyber attack methods to exfiltrate ML assets: SQL injection against model serving databases, exploiting web application vulnerabilities in ML dashboards, or network-level attacks against training infrastructure.
+
+AML.T0029 — Denial of ML Service
+Disrupting model availability: resource exhaustion through complex queries, adversarial inputs that cause infinite loops or crashes, flooding rate limiters, and attacking serving infrastructure. AI-specific DoS includes inputs designed to maximize inference time.
+
+AML.T0031 — Erode ML Model Integrity
+Gradually degrading model performance or reliability through sustained adversarial pressure. This includes feedback poisoning (manipulating model outputs to corrupt future training), reputation attacks (causing visible failures that erode user trust), and drift induction.
+
+AML.T0034 — Cost Harvesting
+Exploiting ML APIs to consume compute resources at the target's expense. Automated bulk querying, complex prompt chains, and resource-intensive inputs maximize cost per query. Particularly effective against pay-per-token APIs.
+
+AML.T0035 — ML Intellectual Property Theft
+Stealing proprietary ML models, training data, or architectural innovations. Combines model extraction (functional copying), training data extraction, and traditional IP theft methods.
+
+AML.T0036 — Data Exfiltration via LLM
+Using the LLM as a channel to exfiltrate sensitive data from connected systems. Through prompt injection, an attacker can instruct the model to retrieve and expose data from RAG sources, databases, APIs, and file systems that the model has access to.
+
+AML.T0040 — ML Model Inference API Access
+Gaining access to the model's inference endpoint. This is the most common access vector for black-box attacks. Requires only the ability to submit inputs and observe outputs.
+
+AML.T0042 — Verify Attack
+Testing whether the attack succeeded: confirming adversarial examples are misclassified, verifying backdoors activate on trigger inputs, checking that poisoned data influenced model behavior, and validating that extracted models are functionally equivalent.
+
+AML.T0043 — Craft Adversarial Data
+Creating specific adversarial inputs: perturbation-based examples, semantic adversarial text, trigger patterns for backdoor activation, and encoded payloads for prompt injection. This is the primary attack development activity.
+
+AML.T0044 — Full ML Model Access
+Obtaining complete access to model weights, architecture, and training configuration. This enables white-box attacks: gradient-based adversarial example generation, backdoor detection and exploitation, and precise model extraction.
+
+AML.T0047 — ML-Enabled Product or Service
+Targeting the end product or service that uses ML rather than the ML system itself. Exploiting the integration between ML components and traditional software to achieve impact.
+
+AML.T0048 — Command and Control via ML Model
+Establishing C2 channels through model inputs and outputs. Steganographic encoding in model responses, using model API as a dead drop, and coordinating botnet operations through inference requests.
+
+AML.T0049 — Exploit Public-Facing Application
+Gaining initial access through publicly accessible ML applications: chatbots, recommendation engines, search systems, and content moderation tools. These applications often have less security hardening than traditional web applications.
+
+AML.T0050 — Command Injection via LLM
+Injecting commands through LLM outputs that are executed by downstream systems. If LLM outputs are used in system calls, database queries, or API requests without sanitization, prompt injection can achieve arbitrary code execution.
+
+AML.T0051 — LLM Prompt Injection
+The signature attack against LLM-based systems. Direct prompt injection submits instructions that override system prompts. Indirect prompt injection embeds instructions in data sources the model consumes. Combined with tool use, prompt injection can achieve arbitrary system compromise.
+
+AML.T0052 — Phishing via AI-Generated Content
+Using AI to generate highly convincing phishing content: personalized emails, deepfake audio/video, and social engineering scripts. AI-generated phishing content can be customized at scale and is increasingly difficult to distinguish from legitimate communication.
+
+AML.T0053 — AI Agent Tool Invocation
+Manipulating AI agents into invoking their tools in unauthorized ways. Through prompt injection or social engineering, attackers cause agents to: execute code, send messages, modify files, access databases, make purchases, or perform other privileged operations.
+
+AML.T0054 — RAG Data Poisoning
+Injecting adversarial content into the retrieval corpus of RAG systems. Poisoned documents are retrieved and included in the model's context window, enabling indirect prompt injection at scale. Defense: content integrity verification, source reputation scoring, retrieval result validation.
+
+AML.T0055 — Unsafe Training on User-Generated Content
+Using unfiltered user-generated content for model training or fine-tuning. Users can deliberately submit content designed to influence model behavior when it's incorporated into training data. This creates a feedback loop vulnerability.
+
+AML.T0056 — LLM Jailbreak
+Circumventing LLM safety mechanisms through creative prompting techniques. Categories: role-play jailbreaks, encoding-based bypasses, multi-turn escalation, context overflow, and adversarial suffix attacks. Jailbreak resistance is an ongoing arms race between model developers and attackers.
+
+AML.T0057 — LLM Impersonation
+LLM-generated content that impersonates specific individuals, organizations, or other AI systems. Used for social engineering, misinformation, and reputation damage. Detection requires provenance tracking and stylometric analysis.
+
+AML.T0058 — LLM Hallucination Exploitation
+Exploiting the tendency of LLMs to generate confident but incorrect information. Attackers craft prompts that maximize hallucination likelihood, then use the authoritative-sounding but false outputs for social engineering or misinformation.
+
+AML.T0059 — System Prompt Extraction
+Recovering the system prompt through various techniques: direct asking, encoding tricks, context overflow, and indirect inference from model behavior. System prompts often contain sensitive instructions, API schemas, tool definitions, and access controls.
+
+AML.T0060 — Training Data Reconstruction
+Reconstructing training data from model parameters or outputs. Techniques include membership inference, model inversion, and extraction attacks that exploit memorization of rare or unique training examples.
