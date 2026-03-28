@@ -334,5 +334,4 @@ sancta/
 ## License
 
 MIT
-#   S A N  
- 
+#
